@@ -100,6 +100,12 @@ public class CsmState {
   public boolean canGoTo( CsmState st ){
     return goesTo.contains( st );
   }
+  public List<Integer> SuccessorList(){
+    List<Integer> suc = new ArrayList<Integer>();
+    for ( CsmState s: goesTo )
+      suc.add( s.idx );
+    return suc;
+  }
   public int numSuccessors( ){
     return goesTo.size();
   }
@@ -110,6 +116,12 @@ public class CsmState {
       if ( st.canGoTo( this ))
         comesFrom.add( st );
     }
+  }
+  public List<Integer> PredecessorList(){
+    List<Integer> pred = new ArrayList<Integer>();
+    for ( CsmState s: comesFrom )
+      pred.add( s.idx );
+    return pred;
   }
   public int numPredecessors( ){
     return comesFrom.size();
