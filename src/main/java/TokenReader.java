@@ -59,6 +59,8 @@ public class TokenReader {
           break;
         }
         int cmt = cline.indexOf("//");
+        if (cmt < 0)
+            cmt = cline.indexOf("#");
         if ( cmt >= 0 ) // strip comment from end of line
           cline = cline.substring( 0, cmt );
         

@@ -17,7 +17,7 @@ import java.util.HashMap;
 
 public class CSMcompile {
   private static String version = 
-    "2021-Apr-22 use /build & /data";
+    "2, 2021-04-30 use /build & /data";
 //  "initial version comment";
   
   private static String parsePath = "";
