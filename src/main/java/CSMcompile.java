@@ -28,7 +28,7 @@ public class CSMcompile {
   }
   
   private static final DateTimeFormatter DATE_FORMATTER =
-    DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm");
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     
   public static String formatDateTime(FileTime fileTime) {
     LocalDateTime localDateTime = fileTime
