@@ -14,9 +14,12 @@ public class CsmCGroup {
   public CsmCGroup( String name, jsV entries ) {  // new CGroup definition from control.def
     nm = name;
     CGrpMap.put( nm, this );     // not a state's nxtMap add to global list of CGroups
-    
-    for( String evt: entries.fields() )
-      addTransition( evt, entries.getField( evt ).asStr() );
+    if ( !entries.isObj() ) {
+      CSMcompile.Report("value for CGroups." + name + " is not an object!");
+    } else {
+      for (String evt : entries.fields())
+        addTransition(evt, entries.getField(evt).asStr());
+    }
   }
   public CsmCGroup( String name ) {  // nxtState rep for a CsmState
     nm = name;
