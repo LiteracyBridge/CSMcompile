@@ -32,6 +32,8 @@ public class jsV {
     tknVal = tkn;
   }
   public void objAdd( CsmToken nm, jsV val ){  // add nm:val to vObj jsV
+    if ( CsmToken.invalidName( nm ))
+      CSMcompile.Report( "invalid field name '"+nm+"'" );
     if (typ!=vType.vObj) System.out.println( "objAdd not vObj" );
     nmValMap.put( nm.text(), val );
   }

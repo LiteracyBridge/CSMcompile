@@ -18,9 +18,10 @@ public class JSONish {
   public String toString(){
     return result.toString();
   }
-  
-  private void err( String msg ){
-    System.out.println( msg + cdef.toString() );
+
+  private void err( String msg, String path ){
+    CSMcompile.Report( "JSONish parse err: " + msg + "  at "+path );
+   // System.out.println( msg + cdef.toString() );
   }
   private jsV parseListObj( CsmToken.tknPunct close, int depth, String path ){
     // called with cTkn==LBrace or LBracket
@@ -28,20 +29,23 @@ public class JSONish {
     // calls parseValue to parse vals that are {} or [] lists
     jsV lst = new jsV( close==CsmToken.tknPunct.RBrace );
     CsmToken nm = null;
-    int elCnt = 0;
+    String elPos = "";
     
     CsmToken tkn = cdef.nextToken();
     CsmToken.tknPunct pTkn = CsmToken.asPunct( tkn );  // move to first token
     while ( pTkn != close ){
       if ( close==CsmToken.tknPunct.RBrace ){  // parsing Obj, so get <Nm> <:> 
-        nm = parseName( depth, path + elCnt );
+        nm = parseName( depth, path + elPos );
         pTkn = CsmToken.asPunct( cdef.currToken() );
         if ( pTkn==CsmToken.tknPunct.Colon )   // check if Colon
           pTkn = CsmToken.asPunct( cdef.nextToken()); // and skip it
-      } 
+        elPos = nm.toString() + ":";
+      } else
+        elPos = "[" + lst.listCnt() + "]";
 
       // at start of Value 
-      jsV val = parseValue( depth, path + (nm==null? elCnt : nm.text()) );
+      jsV val = parseValue( depth, path + elPos );
+
       if (nm==null)
         lst.lstAdd( val );
       else
@@ -51,8 +55,7 @@ public class JSONish {
         pTkn = CsmToken.asPunct( cdef.nextToken()); // and skip it, if it is
       // pTkn should now be closeBr, or nxt Nm or Val
       if ( cdef.currToken()==TokenReader.nullTkn ) 
-        err( "EOF without closeBr" );
-      
+        err( "EOF without closeBr", path );
     }
     cdef.nextToken();   // accept close
    // if ( close==CsmToken.tknPunct.RBracket ) System.out.println( lst );
@@ -66,10 +69,12 @@ public class JSONish {
       nm = cdef.nextToken();
       pTkn = CsmToken.asPunct( cdef.nextToken() );
       if ( pTkn!=CsmToken.tknPunct.DQuote )
-        err( "Expected matching DQuote after name" );
+        err( "Expected matching DQuote after name", path );
     } else
       nm = cdef.currToken();
     cdef.nextToken();
+    if ( CsmToken.invalidName( nm ) )
+      err( "invalid name '"+nm+"'", path );
     return nm;
   }
   
@@ -96,7 +101,7 @@ public class JSONish {
         val.argAdd( arg.toString() );
         pTkn = CsmToken.asPunct( cdef.nextToken() ); 
         if ( pTkn!=CsmToken.tknPunct.RParen ){
-          err( "expected )" );
+          err( "expected )", path );
         }
       }
       cdef.nextToken();

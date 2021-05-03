@@ -75,6 +75,21 @@ public class CsmToken {
       return tknPunct.pNull;
     return punctTokens.get( tkn.text );
   }
+  public static boolean invalidName( CsmToken tkn ){    // => tknPunct or pNull if group!=gPunct
+    switch ( tkn.group ){
+      case gEvent:
+      case gAction:
+      case gToken:   return false;
+
+      default:      // tokens that can't be field names
+      case gList:
+      case gObject:
+      case gNull:
+      case gGroup:
+      case gPunct:   return true;
+    }
+  }
+
   public static tknEvent asEvent( CsmToken tkn ){    // => tknEvent or eNull if group!=gEvent
     if ( tkn.group!=tknGroup.gEvent ) return tknEvent.eNull;
     return eventTokens.get( tkn.text );
@@ -83,7 +98,7 @@ public class CsmToken {
     return eventNames.get( idx );
   }
   public static int nEvents(){
-    return eventNames.size()-1;  // eUNDEF isn't a token
+    return eventNames.size()-2;  // anyKey & eUNDEF aren't tokens
   }
   public static tknEvent toEvent( String ename ){
     return eventTokens.containsKey( ename )? eventTokens.get( ename ) : tknEvent.eNull;
