@@ -12,20 +12,28 @@ import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
+//import java.util.Map;
+//import java.util.HashMap;
 
 public class CSMcompile {
-  private static String version = 
-    "2, 2021-04-30 use /build & /data";
+
+  //***********************************  CLASS  ***********************************
+  private static final String version =
+      "3, 2021-05-03 better errors for misplaced ';' w/ parse path";
+//    "2, 2021-04-30 use /build & /data";
 //  "initial version comment";
-  
+
   private static String parsePath = "";
   private static String initState = "";
+  private static String qcState = "";
+  private static int ErrorCount = 0;
   
   public static void Report( String msg ){
     System.out.println( msg + " in " + parsePath  );
+    ErrorCount++;
   }
+  public static boolean showPredecessors = false;
+  public static boolean showSuccessors = false;
   
   private static final DateTimeFormatter DATE_FORMATTER =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -56,6 +64,8 @@ public class CSMcompile {
       cF.println( "  " + cfg.getIntField( "longIdleMS", 30000 ) + ",  // longIdleMS " );
       cF.println( "  " + cfg.getIntField( "minShortPressMS", 50 ) + ",  // minShortPressMS " );
       cF.println( "  " + cfg.getIntField( "minLongPressMS", 600 ) + ",  // minLongPressMS " );
+      qcState = cfg.getStrField( "qcTestState", "qcTest" );
+      cF.println( "  " + CsmState.asIdx( qcState ) + ", // qcTestState " );
       initState = cfg.getStrField( "initState", "init" );
       cF.println( "  " + CsmState.asIdx( initState ) + ", // initState " );
       
@@ -77,7 +87,7 @@ public class CSMcompile {
       cF.println( "}; " );
     }
   }
-  private static List<CsmState> CsmStates = new ArrayList<CsmState>();
+  private static final List<CsmState> CsmStates = new ArrayList<CsmState>();
   private static int csmStCnt = 0;
   
   public static void buildCSM( jsV def ){
@@ -107,16 +117,18 @@ public class CSMcompile {
       }
       parsePath = "control.def";
       CsmState.verifyDefined();   // report any undefined states
-      if ( CsmState.nCSMstates != csts.fieldCnt() )
-        CSMcompile.Report( "CStates: has " + CsmState.nCSMstates  + " fields, but " + csts.fieldCnt() + " were defined" ); 
+    // if ( CsmState.nCSMstates != csts.fieldCnt() )
+    //    CSMcompile.Report( "CStates: has " + CsmState.nCSMstates  + " fields, but " + csts.fieldCnt() + " were defined" );
       CsmState.calcReachability();
       for (int i=0; i< CsmState.nCSMstates; i++ ){
         CsmState st = CsmState.stByIdx( i );
         int nPred = st.numPredecessors();
         int nSucc = st.numSuccessors();
         if (nPred==0 && st.idx != CsmState.asIdx(initState)) 
-          CSMcompile.Report( "CStates '" + st.nm  + "' is unreachable" ); 
-        System.out.println( st.PredecessorList() + " => " + i + ": " + st.nm + " => " + st.SuccessorList() );
+          CSMcompile.Report( "CStates '" + st.nm  + "' is unreachable" );
+        if ( showPredecessors || showSuccessors )
+         System.out.println( ( showPredecessors? st.PredecessorList() + " => " : "") + i + ": " + st.nm +
+                   ( showSuccessors? " => " + st.SuccessorList() : "" ));
       }
     }
   }
@@ -137,10 +149,11 @@ public class CSMcompile {
       else {
         cF.println( "csmState " + st.nm + " =  // TBookCMS[" + i + "] " );
         cF.println( "  {  " + st.idx + ", \"" + st.nm + "\", " );
+        cF.println( "//     N   H   C   P   M   T   L   R   p   S   t   H_  C_  P_  M_  T_  L_  R_  p_  S_  t_  sH  sC  sP  sM  sT  sL  sR  sp  sS  st  Ad  As  sI  lI  lB  cB  CB  FU  T   cF  lH  mH" );
         String nxtIdxStr = "";
         for (int iEvt=0; iEvt < CsmToken.nEvents(); iEvt++ ){
           String enm = CsmToken.eventName( iEvt );
-          nxtIdxStr += st.nxtStIdx( enm ) + ", ";
+          nxtIdxStr += String.format( "%2d", st.nxtStIdx( enm ))+ ", ";
         }
         cF.println( "     { " + nxtIdxStr + "}," );
         
@@ -172,22 +185,45 @@ public class CSMcompile {
   }
   public static void main(String[] args)  throws Exception {
     System.out.println( "CSMcompile version: " + version );
-    File cFile = new File( "tbook_csm_def.h" );
+    String in_path = "control.def";
+    String out_path = "tbook_csm_def.h";
+    int pos = 0;
+    for ( String s: args ) {
+      if (s.startsWith("-")) {  // command line switches
+        switch (s) {
+          case "-showPred":
+            showPredecessors = true;
+            break;
+          case "-showSucc":
+            showSuccessors = true;
+            break;
+        }
+      } else { // positional
+        if (pos == 0) in_path = s;  // 1st positional
+        if (pos == 1) out_path = s;
+        pos++;
+      }
+    }
+
+    File cFile = new File( out_path );
     PrintWriter cF = new PrintWriter( cFile );
     
-    Path file = Paths.get("control.def");
+    Path file = Paths.get( in_path );
     BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
     System.out.println( "processing " + file.toAbsolutePath() + " of: " + formatDateTime( attr.lastModifiedTime() ));
-    
+
     cF.println( "// TBook Control State Machine   tbook_csm_def.h" );
     cF.println( "// generated by CSMcompile version: " + version );
     cF.println( "// run at " + LocalDateTime.now().format(DATE_FORMATTER) );
     cF.println( "// from " + file.toAbsolutePath() + " of: " + formatDateTime( attr.lastModifiedTime()) );
     
     JSONish jsh = new JSONish( file.toAbsolutePath().toString() );
-    System.out.println( "  control.def version:  " + jsh.FirstLine );
+    System.out.println( "  version: " + jsh.FirstLine );
     jsV def = jsh.result;
-    
+
+    System.out.println( "to " + out_path + (showPredecessors? " (showing predecessor states) ":" (no -showPred)" ) +
+            (showSuccessors? " (showing successor states) ":" (no -showSucc)" ) );
+
     cF.println( "#include \"controlmanager.h\" " );
     cF.println( "char CSM_Version[] = \"PRE: " + jsh.FirstLine + "\"; " );
     
@@ -198,11 +234,13 @@ public class CSMcompile {
     writeSysAudio( cF );
     writeStates( cF );
     writeTBookCSM( cF );
-    
+
     cF.close();
-    
-    
-    
-    System.out.println( "CSMcompile wrote tbook_csm.c" );
+
+    if ( ErrorCount > 0 ){
+      System.out.println( "CSMcompile reported " + ErrorCount + " problems, output may be incorrect." );
+    //  System.exit( ErrorCount );
+    }
+    System.out.println( "CSMcompile wrote tbook_csm_def.h" );
   }
 }
