@@ -78,14 +78,13 @@ public class CsmState {
     }
     
     jsV grps = stdef.getField( "CGroups" );
-    if ( grps != null ){
-      for( int i=0; i< grps.listCnt(); i++ ) // add all the transitions for each CGroup
-        nxtState.addGrpTransitions( grps.listEl(i).asStr() );
-      
-      for( String fnm: stdef.fields() ){
+    if ( grps != null ) {
+      for (int i = 0; i < grps.listCnt(); i++) // add all the transitions for each CGroup
+        nxtState.addGrpTransitions(grps.listEl(i).asStr());
+    }
+    for( String fnm: stdef.fields() ){
         if ( !fnm.equals("Actions") && !fnm.equals("CGroups") ){  // evt: nxtSt
           nxtState.addTransition( fnm, stdef.getField( fnm ).asStr() );
-        }
       }
     }
   }
