@@ -13,7 +13,7 @@ public class CsmCGroup {
   
   public CsmCGroup( String name, jsV entries ) {  // new CGroup definition from control.def
     nm = name;
-    CGrpMap.put( nm, this );     // not a state's nxtMap add to global list of CGroups
+    CGrpMap.put( nm, this );     // not a state's nxtMap, so add to global list of CGroups
     if ( !entries.isObj() ) {
       CSMcompile.Report("value for CGroups." + name + " is not an object!");
     } else {
@@ -31,10 +31,15 @@ public class CsmCGroup {
     return nxtState.get( evt );
   }
   public void addTransition( String evt, String stnm ){
-    if ( CsmToken.toEvent( evt )==CsmToken.tknEvent.eNull ) 
+    if ( CsmToken.toEvent( evt )==CsmToken.tknEvent.eNull )
       CSMcompile.Report( "field name '" + evt + "' is not an Event name" );
     int idx = CsmState.asIdx( stnm );  // assign state index
-    nxtState.put( evt, stnm );
+    if ( evt.equals("anyKey") ) {
+      for (  CsmToken.tknEvent e: CsmToken.tknKeys )  // add Home..starTable unless already defined
+        if ( !nxtState.containsKey(e.name()) )
+          nxtState.put( e.name(), stnm );
+    } else
+      nxtState.put( evt, stnm );
   }
   public void addGrpTransitions( String cgname ){
     CsmCGroup grp = CGrpMap.get( cgname );

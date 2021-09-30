@@ -12,6 +12,8 @@ import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 import java.util.ArrayList;
+
+import static java.lang.System.exit;
 //import java.util.Map;
 //import java.util.HashMap;
 
@@ -19,7 +21,10 @@ public class CSMcompile {
 
   //***********************************  CLASS  ***********************************
   private static final String version =
-      "3, 2021-05-03 better errors for misplaced ';' w/ parse path";
+      "6, 2021-05-20 add filesTest action & events";
+//    "5, 2021-05-19 exit immediately on premature EOF";
+//    "4, 2021-05-07 proper handling of anyKey";
+//    "3, 2021-05-03 better errors for misplaced ';' w/ parse path";
 //    "2, 2021-04-30 use /build & /data";
 //  "initial version comment";
 
@@ -31,6 +36,10 @@ public class CSMcompile {
   public static void Report( String msg ){
     System.out.println( msg + " in " + parsePath  );
     ErrorCount++;
+    if ( msg.contains("!!")){
+      System.out.println(" unrecoverable error, exiting...");
+      System.exit(0);
+    }
   }
   public static boolean showPredecessors = false;
   public static boolean showSuccessors = false;
@@ -137,7 +146,9 @@ public class CSMcompile {
     cF.println( "int   nPlaySys = " + CsmAction.SysAudio.size() + ";  // # PlaySys prompts used by CSM " );
     cF.println( "SysAudio_t SysAudio[] = { " );
     for( String s: CsmAction.SysAudio )
-      cF.println( "{ \"" + s + "\",  \"M0:/system/audio/" + s + ".wav\" }, " );           
+      cF.println( "{ \"" + s + "\",  \"M0:/system/audio/" + s + ".wav\" }, " );
+    if ( CsmAction.SysAudio.size()==0 )
+      cF.println( "  \"dummy\" " );  // so it will compile
     cF.println( "};  // SysAudio " );
   }
   public static void writeStates( PrintWriter cF ){
@@ -149,7 +160,7 @@ public class CSMcompile {
       else {
         cF.println( "csmState " + st.nm + " =  // TBookCMS[" + i + "] " );
         cF.println( "  {  " + st.idx + ", \"" + st.nm + "\", " );
-        cF.println( "//     N   H   C   P   M   T   L   R   p   S   t   H_  C_  P_  M_  T_  L_  R_  p_  S_  t_  sH  sC  sP  sM  sT  sL  sR  sp  sS  st  Ad  As  sI  lI  lB  cB  CB  FU  T   cF  lH  mH" );
+        cF.println( "//     N   H   C   P   M   T   L   R   p   S   t   H_  C_  P_  M_  T_  L_  R_  p_  S_  t_  sH  sC  sP  sM  sT  sL  sR  sp  sS  st  As  Ad  sI  lI  lB  cB  CB  FU  T   cF  lH  mH" );
         String nxtIdxStr = "";
         for (int iEvt=0; iEvt < CsmToken.nEvents(); iEvt++ ){
           String enm = CsmToken.eventName( iEvt );

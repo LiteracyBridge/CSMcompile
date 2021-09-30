@@ -62,14 +62,14 @@ public class CsmState {
   private Set<CsmState> goesTo = new HashSet<CsmState>();
   
   
-  public CsmState( String name, jsV stdef ) { 
+  public CsmState( String name, jsV stdef ) {    // decodes 'stdef' for actions & nextState transitions
     nm = name;
     idx = asIdx( nm );
     statesByIndex.put( idx, this );   // add to possibly sparse list
     
     nxtState = new CsmCGroup( nm );
     
-    jsV acts = stdef.getField( "Actions" );
+    jsV acts = stdef.getField( "Actions" );  // translate Actions:[]
     if ( acts!=null ){ 
       for( int i=0; i< acts.listCnt(); i++ ){
         jsV op = acts.listEl( i );
@@ -77,7 +77,7 @@ public class CsmState {
       }
     }
     
-    jsV grps = stdef.getField( "CGroups" );
+    jsV grps = stdef.getField( "CGroups" );  // build nxtState list
     if ( grps != null ) {
       for (int i = 0; i < grps.listCnt(); i++) // add all the transitions for each CGroup
         nxtState.addGrpTransitions(grps.listEl(i).asStr());

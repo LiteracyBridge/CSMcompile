@@ -1,8 +1,5 @@
 // CsmToken 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 public class CsmToken {
   //***********************************  CLASS  ***********************************
@@ -15,23 +12,36 @@ public class CsmToken {
   public enum tknPunct {  // tknPunct -- JSONish punctuation tokens  -- tknGroup==gPunct
     pNull, Comma, Semi, Colon, LBrace, RBrace, LBracket, RBracket, LParen, RParen, DQuote 
   };
+  // MUST MATCH:  ENms[] defined in tknTable.c
   public enum tknEvent {  // tknEvent -- TBook event types  -- tknGroup==gEvent
     eNull, 
-    Home,   Circle,  Plus,   Minus,   Tree,   Lhand,   Rhand,   Pot,  Star,  Table,  //=10
-    Home__,  Circle__,  Plus__,  Minus__,  Tree__,  Lhand__,  Rhand__,  Pot__,   Star__, Table__,  //=20
+    Home,     Circle,     Plus,      Minus,      Tree,      Lhand,      Rhand,      Pot,     Star,     Table,     //=10
+    Home__,   Circle__,   Plus__,    Minus__,    Tree__,    Lhand__,    Rhand__,    Pot__,   Star__,   Table__,   //=20
     starHome, starCircle, starPlus,  starMinus,  starTree,  starLhand,  starRhand,  starPot, starStar, starTable, //=30
-    AudioDone, AudioStart, ShortIdle, LongIdle, LowBattery, BattCharging, BattCharged, FirmwareUpdate, Timer, //=39
-    ChargeFault, LithiumHot, MpuHot, anyKey, eUNDEF //=44
-  };
+    AudioStart,           AudioDone,	         ShortIdle,	            LongIdle,	         LowBattery,          //=35
+    BattCharging,         BattCharged,	         FirmwareUpdate,        Timer,               ChargeFault,         //=40
+    LithiumHot,           MpuHot,                FilesSuccess,          FilesFail,           anyKey,              //=45
+    eUNDEF //=46
+    };
+  // MUST MATCH:  ANms[] defined in tknTable.c
   public enum tknAction {  // tknAction -- TBook actions  -- tknGroup==gAction
-    aNull,  LED,  bgLED,  
-    playSys,  playSubj, pausePlay, resumePlay,  stopPlay, volAdj,  spdAdj,  posAdj,
-    startRec, pauseRec, resumeRec, finishRec, playRec, saveRec, writeMsg,
-    goPrevSt, saveSt,  goSavedSt,
-    subjAdj,  msgAdj,  setTimer, resetTimer, showCharge,
-    startUSB, endUSB,  powerDown, sysBoot, sysTest, playNxtPkg, changePkg
+    aNull,
+    LED,        bgLED,     playSys,
+    playSubj,   pausePlay, resumePlay,
+    stopPlay,   volAdj,    spdAdj,
+    posAdj,     startRec,  pauseRec,
+    resumeRec,  finishRec, playRec,
+    saveRec,    writeMsg,  goPrevSt,
+    saveSt,     goSavedSt, subjAdj,
+    msgAdj,     setTimer,  resetTimer,
+    showCharge, startUSB,  endUSB,
+    powerDown,  sysBoot,   sysTest,
+    playNxtPkg, changePkg, playTune,
+    filesTest
   };
-  
+
+  public static EnumSet<tknEvent> tknKeys = EnumSet.range( tknEvent.Home, tknEvent.starTable );
+
   private static Map< String, tknGroup > predefTokens = new HashMap< String, tknGroup >();    // map known token strings to enum tknGroup
   
   private static Map< String, tknPunct > punctTokens = new HashMap< String, tknPunct >();     // map punct 1 char strings to enum tknPunct
@@ -103,10 +113,14 @@ public class CsmToken {
   public static tknEvent toEvent( String ename ){
     return eventTokens.containsKey( ename )? eventTokens.get( ename ) : tknEvent.eNull;
   }
-  
+
+
   public static tknAction asAction( CsmToken tkn ){    // => tknAction or aNull if group!=gAction
     if ( tkn.group!=tknGroup.gAction ) return tknAction.aNull;
     return actionTokens.get( tkn.text );
+  }
+  public static boolean isAction( String tkn ){    // => tknAction or aNull if group!=gAction
+    return actionTokens.containsKey( tkn );
   }
   public static tknAction toAction( String aname ){
     return actionTokens.containsKey( aname )? actionTokens.get( aname ) : tknAction.aNull;

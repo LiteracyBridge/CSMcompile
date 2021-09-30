@@ -13,7 +13,9 @@ public class CsmAction {
   public CsmAction( String actn, String argument ) { 
     act = actn;
     if ( argument!=null) arg = argument;
-    
+
+    if ( !CsmToken.isAction( act ) )
+      CSMcompile.Report( "unrecognized Action: '" + act + "'" );
     if ( act.equals("playSys") )
       SysAudio.add( arg );
   }

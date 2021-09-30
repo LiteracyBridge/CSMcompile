@@ -55,7 +55,7 @@ public class JSONish {
         pTkn = CsmToken.asPunct( cdef.nextToken()); // and skip it, if it is
       // pTkn should now be closeBr, or nxt Nm or Val
       if ( cdef.currToken()==TokenReader.nullTkn ) 
-        err( "EOF without closeBr", path );
+        err( "!! EOF without closeBr", path );
     }
     cdef.nextToken();   // accept close
    // if ( close==CsmToken.tknPunct.RBracket ) System.out.println( lst );
