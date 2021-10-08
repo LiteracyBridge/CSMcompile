@@ -21,7 +21,8 @@ public class CSMcompile {
 
   //***********************************  CLASS  ***********************************
   private static final String version =
-      "6, 2021-05-20 add filesTest action & events";
+      "7(2021-10-7)";  // also output csm_data.txt
+//    "6, 2021-05-20 add filesTest action & events";
 //    "5, 2021-05-19 exit immediately on premature EOF";
 //    "4, 2021-05-07 proper handling of anyKey";
 //    "3, 2021-05-03 better errors for misplaced ';' w/ parse path";
@@ -73,6 +74,7 @@ public class CSMcompile {
       cF.println( "  " + cfg.getIntField( "longIdleMS", 30000 ) + ",  // longIdleMS " );
       cF.println( "  " + cfg.getIntField( "minShortPressMS", 50 ) + ",  // minShortPressMS " );
       cF.println( "  " + cfg.getIntField( "minLongPressMS", 600 ) + ",  // minLongPressMS " );
+
       qcState = cfg.getStrField( "qcTestState", "qcTest" );
       cF.println( "  " + CsmState.asIdx( qcState ) + ", // qcTestState " );
       initState = cfg.getStrField( "initState", "init" );
@@ -96,6 +98,44 @@ public class CSMcompile {
       cF.println( "}; " );
     }
   }
+  public static void wrDataConfig( jsV def, PrintWriter cF ) {
+    jsV cfg = def.getField( "config" );
+    parsePath = "dataConfig";
+    if (cfg==null)
+      System.out.println( "No config:{} found." );
+    else if ( !cfg.isObj() )
+      System.out.println( "config: isn't an object" );
+    else {
+      // *** FIELD ORDER MUST MATCH struct TBConfig in tbook.h
+      cF.println( cfg.getIntField("default_volume", 5));
+      cF.println( cfg.getIntField("powerCheckMS", 60000));
+      cF.println( cfg.getIntField("shortIdleMS", 2000));
+      cF.println( cfg.getIntField("longIdleMS", 30000));
+      cF.println( cfg.getIntField("minShortPressMS", 50));
+      cF.println( cfg.getIntField("minLongPressMS", 600));
+
+      qcState = cfg.getStrField( "qcTestState", "qcTest" );
+      cF.println( CsmState.asIdx( qcState )  );
+      initState = cfg.getStrField( "initState", "init" );
+      cF.println( CsmState.asIdx( initState ) );
+
+      cF.println( cfg.getStrField( "systemAudio", "system/audio" ) );
+      cF.println( cfg.getStrField( "bgPulse",    "_49G" )  );
+      cF.println( cfg.getStrField( "fgPlaying",   "G!" ) );
+      cF.println( cfg.getStrField( "fgPlayPaused", "G2_3!" ));
+      cF.println( cfg.getStrField( "fgRecording",  "R!" )  );
+      cF.println( cfg.getStrField( "fgRecordPaused", "R2_3!" ) );
+      cF.println( cfg.getStrField( "fgSavingRec",  "O!" )  );
+      cF.println( cfg.getStrField( "fgSaveRec",   "G3_3G3" )  );
+      cF.println( cfg.getStrField( "fgCancelRec",  "R3_3R3" )  );
+      cF.println( cfg.getStrField( "fgUSB_MSC",   "O5o5!" )  );
+      cF.println( cfg.getStrField( "fgTB_Error",  "R8_2R8_2R8_20!" ) );
+      cF.println( cfg.getStrField( "fgNoUSBcable", "_3R3_3R3_3R3_5!" ) );
+      cF.println( cfg.getStrField( "fgUSBconnect", "G5g5!" ));
+      cF.println( cfg.getStrField( "fgPowerDown",  "G_3G_3G_9G_3G_9G_3" ));
+    }
+  }
+
   private static final List<CsmState> CsmStates = new ArrayList<CsmState>();
   private static int csmStCnt = 0;
   
@@ -151,6 +191,11 @@ public class CSMcompile {
       cF.println( "  \"dummy\" " );  // so it will compile
     cF.println( "};  // SysAudio " );
   }
+  public static void wrDataSysAudio( PrintWriter cF ){
+    cF.println( CsmAction.SysAudio.size());
+    for( String s: CsmAction.SysAudio )
+      cF.println( s );
+  }
   public static void writeStates( PrintWriter cF ){
     cF.println( "int   nCSMstates = " + CsmState.nCSMstates + ";  // TBook state machine definition " );
     for (int i=0; i< CsmState.nCSMstates; i++ ){
@@ -183,6 +228,33 @@ public class CSMcompile {
       }
     }
   }
+  public static void wrDataStates( PrintWriter cF ){
+    cF.println( CsmState.nCSMstates );
+    for (int i=0; i< CsmState.nCSMstates; i++ ) {
+      CsmState st = CsmState.stByIdx(i);
+      if (st == null)
+        CSMcompile.Report("CState " + i + " is not defined.");
+      else {
+        cF.println(st.idx);
+        cF.println(st.nm);
+        cF.println(CsmToken.nEvents());  // # nxtStates
+        String nxtIdxStr = "";
+        for (int iEvt = 0; iEvt < CsmToken.nEvents(); iEvt++) {
+          String enm = CsmToken.eventName(iEvt);
+          nxtIdxStr += String.format("%2d", st.nxtStIdx(enm)) + ", ";
+        }
+        cF.println(nxtIdxStr);
+
+        int nA = st.actions.size();
+        cF.println(nA);  // # Actions
+        for (int iA = 0; iA < nA; iA++) {
+          CsmAction a = st.actions.get(iA);
+          cF.println( a.act );
+          if (a.arg=="") cF.println( "_" ); else cF.println( a.arg );
+        }
+      }
+    }
+  }
   public static void writeTBookCSM( PrintWriter cF ){
     cF.println( "csmState * TBookCSM[] = { " );
     for (int i=0; i< CsmState.nCSMstates; i++ ){
@@ -196,8 +268,9 @@ public class CSMcompile {
   }
   public static void main(String[] args)  throws Exception {
     System.out.println( "CSMcompile version: " + version );
-    String in_path = "control.def";
+    String in_path = "control_def.txt";
     String out_path = "tbook_csm_def.h";
+    String out_data_path = "csm_data.txt";
     int pos = 0;
     for ( String s: args ) {
       if (s.startsWith("-")) {  // command line switches
@@ -217,8 +290,10 @@ public class CSMcompile {
     }
 
     File cFile = new File( out_path );
+    File dFile = new File( out_data_path );
     PrintWriter cF = new PrintWriter( cFile );
-    
+    PrintWriter dF = new PrintWriter( dFile );
+
     Path file = Paths.get( in_path );
     BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
     System.out.println( "processing " + file.toAbsolutePath() + " of: " + formatDateTime( attr.lastModifiedTime() ));
@@ -227,10 +302,12 @@ public class CSMcompile {
     cF.println( "// generated by CSMcompile version: " + version );
     cF.println( "// run at " + LocalDateTime.now().format(DATE_FORMATTER) );
     cF.println( "// from " + file.toAbsolutePath() + " of: " + formatDateTime( attr.lastModifiedTime()) );
-    
     JSONish jsh = new JSONish( file.toAbsolutePath().toString() );
     System.out.println( "  version: " + jsh.FirstLine );
     jsV def = jsh.result;
+
+    dF.println( jsh.FirstLine );
+    dF.println( "CSMcompile " + version + " from " + file.toAbsolutePath() + " of " + formatDateTime( attr.lastModifiedTime())  );
 
     System.out.println( "to " + out_path + (showPredecessors? " (showing predecessor states) ":" (no -showPred)" ) +
             (showSuccessors? " (showing successor states) ":" (no -showSucc)" ) );
@@ -239,11 +316,18 @@ public class CSMcompile {
     cF.println( "char CSM_Version[] = \"PRE: " + jsh.FirstLine + "\"; " );
     
     writeConfig( def, cF );  // initState will be state 0
+    wrDataConfig( def, dF ); // writeConfig to csm_data.txt
 
     buildCSM( def );
     
     writeSysAudio( cF );
+    wrDataSysAudio( dF );
+
     writeStates( cF );
+    wrDataStates( dF );
+    dF.close();
+    System.out.println( "CSMcompile wrote " + out_data_path );
+
     writeTBookCSM( cF );
 
     cF.close();
@@ -252,6 +336,6 @@ public class CSMcompile {
       System.out.println( "CSMcompile reported " + ErrorCount + " problems, output may be incorrect." );
     //  System.exit( ErrorCount );
     }
-    System.out.println( "CSMcompile wrote tbook_csm_def.h" );
+    System.out.println( "CSMcompile wrote " + out_path );
   }
 }
