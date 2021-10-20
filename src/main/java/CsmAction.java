@@ -20,6 +20,6 @@ public class CsmAction {
       SysAudio.add( arg );
   }
   public String toString(){
-    return "{ " + act + ", \"" + arg + "\" },";
+    return "{ " + act + ", \"" + arg + "\" }";
   }
 }

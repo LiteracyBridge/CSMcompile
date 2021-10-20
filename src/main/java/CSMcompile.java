@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ArrayList;
 
+import static java.lang.System.arraycopy;
 import static java.lang.System.exit;
 //import java.util.Map;
 //import java.util.HashMap;
@@ -21,7 +22,8 @@ public class CSMcompile {
 
   //***********************************  CLASS  ***********************************
   private static final String version =
-      "7(2021-10-7)";  // also output csm_data.txt
+      "8(2021-10-15)"; // write preloadCSM.c instead of csm_def.h
+//    "7(2021-10-7)";  // also output csm_data.txt
 //    "6, 2021-05-20 add filesTest action & events";
 //    "5, 2021-05-19 exit immediately on premature EOF";
 //    "4, 2021-05-07 proper handling of anyKey";
@@ -65,7 +67,7 @@ public class CSMcompile {
       System.out.println( "config: isn't an object" );
     else {
       //System.out.println( "config:{} has " + cfg.fieldCnt() + " entries." );
-      cF.println( "TBConfig_t  TB_Config = { " );
+      cF.println( "static TBConfig_t  preTB_Config = { " );
       
       // *** FIELD ORDER MUST MATCH struct TBConfig in tbook.h
       cF.println( "  " + cfg.getIntField( "default_volume", 5 ) + ",  // default_volume " );
@@ -95,7 +97,8 @@ public class CSMcompile {
       cF.println( "  \"" + cfg.getStrField( "fgUSBconnect", "G5g5!" ) + "\",  // fgUSBconnect " );
       cF.println( "  \"" + cfg.getStrField( "fgPowerDown",  "G_3G_3G_9G_3G_9G_3" ) + "\",  // fgPowerDown " );
       
-      cF.println( "}; " );
+      cF.println( "};  // preTB_Config" );
+      cF.println(" ");
     }
   }
   public static void wrDataConfig( jsV def, PrintWriter cF ) {
@@ -183,48 +186,56 @@ public class CSMcompile {
   }
       
   public static void writeSysAudio( PrintWriter cF ){
-    cF.println( "int   nPlaySys = " + CsmAction.SysAudio.size() + ";  // # PlaySys prompts used by CSM " );
-    cF.println( "SysAudio_t SysAudio[] = { " );
+    cF.println( "static AudioList_t preSysAudio[] = { " );
+    cF.println(  CsmAction.SysAudio.size() + ",  // # PlaySys prompts used by CSM " );
     for( String s: CsmAction.SysAudio )
-      cF.println( "{ \"" + s + "\",  \"M0:/system/audio/" + s + ".wav\" }, " );
+      cF.println( "{ \"" + s + "\" }," );
     if ( CsmAction.SysAudio.size()==0 )
-      cF.println( "  \"dummy\" " );  // so it will compile
-    cF.println( "};  // SysAudio " );
+      cF.println( "{ \"welcome\" }" );  // so it will compile
+    cF.println( "};  // preSysAudio " );
+    cF.println(" ");
   }
   public static void wrDataSysAudio( PrintWriter cF ){
     cF.println( CsmAction.SysAudio.size());
     for( String s: CsmAction.SysAudio )
       cF.println( s );
   }
+
+  public static String pad( int n ){
+    String s = "";
+    for ( int i=0; i<n; i++ )
+      s += " ";
+    return s;
+  }
   public static void writeStates( PrintWriter cF ){
-    cF.println( "int   nCSMstates = " + CsmState.nCSMstates + ";  // TBook state machine definition " );
+  //  cF.println( "int   nCSMstates = " + CsmState.nCSMstates + ";  // TBook state machine definition " );
     for (int i=0; i< CsmState.nCSMstates; i++ ){
       CsmState st = CsmState.stByIdx( i );
       if ( st==null ) 
         CSMcompile.Report( "CState " + i + " is not defined." );
       else {
-        cF.println( "csmState " + st.nm + " =  // TBookCMS[" + i + "] " );
-        cF.println( "  {  " + st.idx + ", \"" + st.nm + "\", " );
-        cF.println( "//     N   H   C   P   M   T   L   R   p   S   t   H_  C_  P_  M_  T_  L_  R_  p_  S_  t_  sH  sC  sP  sM  sT  sL  sR  sp  sS  st  As  Ad  sI  lI  lB  cB  CB  FU  T   cF  lH  mH" );
-        String nxtIdxStr = "";
-        for (int iEvt=0; iEvt < CsmToken.nEvents(); iEvt++ ){
-          String enm = CsmToken.eventName( iEvt );
-          nxtIdxStr += String.format( "%2d", st.nxtStIdx( enm ))+ ", ";
-        }
-        cF.println( "     { " + nxtIdxStr + "}," );
-        
+        String aPtrs = "";
+        int np = 18 - st.nm.length();
         int nA = st.actions.size();
-        if (nA==0 ) 
-          cF.println( "    0" );
+        if (nA==0 )
+          cF.println( "static ActionList_t a_" + st.nm + pad(np-2) + " = {  0,  { 0 } };" );
         else {
-          cF.println( "     " + nA + ", {  " );
-          for (int iA=0; iA<nA; iA++){
+          for (int iA = 0; iA < nA; iA++) {
             CsmAction a = st.actions.get(iA);
-            cF.println( "          " + a );
+            cF.println("static csmAction_t  a_" + st.nm + "_" + iA + pad(np-4) + " = " + a + ";");
+            aPtrs += (iA == 0 ? "" : ", ") + "&a_" + st.nm + "_" + iA;
           }
-          cF.println( "        }" );
+          cF.println("static ActionList_t a_" + st.nm + pad(np-2) + " = { " + nA + ", { " + aPtrs + " } };");
         }
-        cF.println( "  }; " );
+        String nxtIdxStr = "";
+        int nE = CsmToken.nEvents();
+        for (int iEvt=0; iEvt < nE; iEvt++ ){
+          String enm = CsmToken.eventName( iEvt );
+          nxtIdxStr += ( iEvt==0? "" : "," ) + String.format( "%2d", st.nxtStIdx( enm ));
+        }
+        cF.println( "static short        n_" + st.nm + "[]" + pad(np-4)+ " = { " + nxtIdxStr + "};" );
+        cF.println( "static CState_t     " + st.nm + pad(np) + " = { " + i + ", \"" + st.nm + "\", " + nE + ", n_" + st.nm + ", &a_" + st.nm + " };  // [" + i + "] " );
+        cF.println(" ");
       }
     }
   }
@@ -255,21 +266,42 @@ public class CSMcompile {
       }
     }
   }
-  public static void writeTBookCSM( PrintWriter cF ){
-    cF.println( "csmState * TBookCSM[] = { " );
-    for (int i=0; i< CsmState.nCSMstates; i++ ){
+  public static void writeTBookCSM( PrintWriter cF, String ver ){
+    int nS = CsmState.nCSMstates;
+    cF.println( "static CSList_t  preCSlist = {  " + nS + ", " );
+    cF.println( "  {");
+    String stNms = "";
+    for (int i=0; i< nS; i++ ){
       CsmState st = CsmState.stByIdx( i );
-      if ( st==null ) 
+      int np = 18 - st.nm.length();
+      if ( st==null )
         CSMcompile.Report( "CState " + i + " is not defined." );
       else
-        cF.println( "  &" + st.nm + ",  // TBookCMS[" + i + "] " );
+        stNms += pad(np) + "&" + st.nm + ",";
+
+        if ( i%5==4 ){ cF.println( stNms ); stNms = ""; }
     }
-    cF.println( "};  // end of tbook_csm_def.h" );
+    cF.println( stNms );
+    cF.println( "  }");
+    cF.println( "};  ");
+
+    cF.println( "static CSM_t preCSM = { " );
+    cF.println( "    \"" + ver + "\", " );
+    cF.println( "    &preTB_Config, preSysAudio, &preCSlist" );
+    cF.println( "};  // preCSM");
+
+    cF.println( " " );
+    cF.println( "void     preloadCSM( void ){" );
+    cF.println( "    CSM = &preCSM;" );
+    cF.println( "    TB_Config = &preTB_Config;" );
+    cF.println( "}  // preloadCSM()");
+    cF.println( " ");
+    cF.println( "// preloadCSM.c ");
   }
   public static void main(String[] args)  throws Exception {
     System.out.println( "CSMcompile version: " + version );
     String in_path = "control_def.txt";
-    String out_path = "tbook_csm_def.h";
+    String out_path = "preloadCSM.c";
     String out_data_path = "csm_data.txt";
     int pos = 0;
     for ( String s: args ) {
@@ -298,7 +330,7 @@ public class CSMcompile {
     BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
     System.out.println( "processing " + file.toAbsolutePath() + " of: " + formatDateTime( attr.lastModifiedTime() ));
 
-    cF.println( "// TBook Control State Machine   tbook_csm_def.h" );
+    cF.println( "// preloaded TBook Control State Machine   preloadCSM.c" );
     cF.println( "// generated by CSMcompile version: " + version );
     cF.println( "// run at " + LocalDateTime.now().format(DATE_FORMATTER) );
     cF.println( "// from " + file.toAbsolutePath() + " of: " + formatDateTime( attr.lastModifiedTime()) );
@@ -312,8 +344,8 @@ public class CSMcompile {
     System.out.println( "to " + out_path + (showPredecessors? " (showing predecessor states) ":" (no -showPred)" ) +
             (showSuccessors? " (showing successor states) ":" (no -showSucc)" ) );
 
-    cF.println( "#include \"controlmanager.h\" " );
-    cF.println( "char CSM_Version[] = \"PRE: " + jsh.FirstLine + "\"; " );
+    cF.println( "#include \"packageData.h\" " );
+    cF.println( "//Ver:   " + jsh.FirstLine  );
     
     writeConfig( def, cF );  // initState will be state 0
     wrDataConfig( def, dF ); // writeConfig to csm_data.txt
@@ -328,7 +360,7 @@ public class CSMcompile {
     dF.close();
     System.out.println( "CSMcompile wrote " + out_data_path );
 
-    writeTBookCSM( cF );
+    writeTBookCSM( cF, jsh.FirstLine  );
 
     cF.close();
 
