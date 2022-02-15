@@ -1,6 +1,7 @@
-// CsmAction
-import java.util.List;
+package org.amplio.csm;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class CsmAction {
   //***********************************  CLASS  ***********************************

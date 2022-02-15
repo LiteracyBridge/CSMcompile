@@ -1,11 +1,12 @@
+package org.amplio.csm;
 /**
- * TokenReader -- returns tokens from control.def 
+ * org.amplio.TokenReader -- returns tokens from control.def
  */
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TokenReader {
   
@@ -17,10 +18,10 @@ public class TokenReader {
   
   private final String  delimChars = ",;{}[]()\":";
   private final String  whiteChars = " \t\r\n";
-  public  final static CsmToken  nullTkn = new CsmToken("NUL");
+  public  final static CsmToken nullTkn = new CsmToken("NUL");
   private String  txtTkn = "";   // string for current token being collected
   
-  private List< CsmToken > tkns = new ArrayList<CsmToken>();   // tokens for current line
+  private List<CsmToken> tkns = new ArrayList<CsmToken>();   // tokens for current line
   private CsmToken cTkn = null;    // current token being processed
   
   public String FirstLine = "";
@@ -72,7 +73,7 @@ public class TokenReader {
    }
    return cTkn;
   }
-  public CsmToken  nextToken(){  // INTERNAL:  accept currTkn, then => new currTkn
+  public CsmToken nextToken(){  // INTERNAL:  accept currTkn, then => new currTkn
     if ( cTkn == nullTkn ) 
       return cTkn;   // at EOF
     cTkn = null;  // move to next token
