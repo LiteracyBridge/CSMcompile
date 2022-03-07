@@ -1,5 +1,10 @@
-// CsmToken 
-import java.util.*;
+package org.amplio.csm;// org.amplio.CsmToken
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CsmToken {
   //***********************************  CLASS  ***********************************
@@ -9,7 +14,7 @@ public class CsmToken {
   };
 
   private static final String  punctChars = "_,;:{}[]()\"";
-  public enum tknPunct {  // tknPunct -- JSONish punctuation tokens  -- tknGroup==gPunct
+  public enum tknPunct {  // tknPunct -- org.amplio.JSONish punctuation tokens  -- tknGroup==gPunct
     pNull, Comma, Semi, Colon, LBrace, RBrace, LBracket, RBracket, LParen, RParen, DQuote 
   };
   // MUST MATCH:  ENms[] defined in tknTable.c

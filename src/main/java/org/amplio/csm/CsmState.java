@@ -1,10 +1,11 @@
-// CsmState
-import java.util.List;
+package org.amplio.csm;
+
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CsmState {
   //***********************************  CLASS  ***********************************
@@ -46,7 +47,7 @@ public class CsmState {
     if ( statesByIndex.containsKey( idx ))
       return statesByIndex.get( idx );
     else {
-      CSMcompile.Report( "no CsmState[" + idx + "]" ); 
+      CSMcompile.Report( "no org.amplio.CsmState[" + idx + "]" );
       return null;
     }
   }
@@ -90,7 +91,7 @@ public class CsmState {
   }
 
   private void calcSuccessors(){
-    for (int iEvt=0; iEvt < CsmToken.nEvents(); iEvt++ ){
+    for (int iEvt = 0; iEvt < CsmToken.nEvents(); iEvt++ ){
        int nxtStIdx = nxtStIdx( CsmToken.eventName( iEvt ));
        CsmState dst = statesByIndex.get( nxtStIdx );
        goesTo.add( dst );   // add to set of destinations

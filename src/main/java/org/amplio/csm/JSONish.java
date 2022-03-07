@@ -1,4 +1,5 @@
-// JSONish parser
+package org.amplio.csm;
+
 public class JSONish {
   
   //***********************************  INSTANCE  ***********************************
@@ -20,24 +21,24 @@ public class JSONish {
   }
 
   private void err( String msg, String path ){
-    CSMcompile.Report( "JSONish parse err: " + msg + "  at "+path );
+    CSMcompile.Report( "org.amplio.JSONish parse err: " + msg + "  at "+path );
    // System.out.println( msg + cdef.toString() );
   }
   private jsV parseListObj( CsmToken.tknPunct close, int depth, String path ){
     // called with cTkn==LBrace or LBracket
     // parse list contents & save in nms[] vals[], then allocate listNds at end & return list tknid
     // calls parseValue to parse vals that are {} or [] lists
-    jsV lst = new jsV( close==CsmToken.tknPunct.RBrace );
+    jsV lst = new jsV( close== CsmToken.tknPunct.RBrace );
     CsmToken nm = null;
     String elPos = "";
     
     CsmToken tkn = cdef.nextToken();
     CsmToken.tknPunct pTkn = CsmToken.asPunct( tkn );  // move to first token
     while ( pTkn != close ){
-      if ( close==CsmToken.tknPunct.RBrace ){  // parsing Obj, so get <Nm> <:> 
+      if ( close== CsmToken.tknPunct.RBrace ){  // parsing Obj, so get <Nm> <:>
         nm = parseName( depth, path + elPos );
         pTkn = CsmToken.asPunct( cdef.currToken() );
-        if ( pTkn==CsmToken.tknPunct.Colon )   // check if Colon
+        if ( pTkn== CsmToken.tknPunct.Colon )   // check if Colon
           pTkn = CsmToken.asPunct( cdef.nextToken()); // and skip it
         elPos = nm.toString() + ":";
       } else
@@ -51,24 +52,24 @@ public class JSONish {
       else
         lst.objAdd( nm, val );
       pTkn = CsmToken.asPunct( cdef.currToken() );
-      if ( pTkn==CsmToken.tknPunct.Comma ) // check if nxt tkn is a comma
+      if ( pTkn== CsmToken.tknPunct.Comma ) // check if nxt tkn is a comma
         pTkn = CsmToken.asPunct( cdef.nextToken()); // and skip it, if it is
       // pTkn should now be closeBr, or nxt Nm or Val
-      if ( cdef.currToken()==TokenReader.nullTkn ) 
+      if ( cdef.currToken()== TokenReader.nullTkn )
         err( "!! EOF without closeBr", path );
     }
     cdef.nextToken();   // accept close
-   // if ( close==CsmToken.tknPunct.RBracket ) System.out.println( lst );
+   // if ( close==org.amplio.CsmToken.tknPunct.RBracket ) System.out.println( lst );
     return lst;
   }
   
   private CsmToken parseName( int depth, String path ){
     CsmToken.tknPunct pTkn = CsmToken.asPunct( cdef.currToken() );
     CsmToken nm = null;
-    if ( pTkn==CsmToken.tknPunct.DQuote ){
+    if ( pTkn== CsmToken.tknPunct.DQuote ){
       nm = cdef.nextToken();
       pTkn = CsmToken.asPunct( cdef.nextToken() );
-      if ( pTkn!=CsmToken.tknPunct.DQuote )
+      if ( pTkn!= CsmToken.tknPunct.DQuote )
         err( "Expected matching DQuote after name", path );
     } else
       nm = cdef.currToken();
@@ -86,21 +87,21 @@ public class JSONish {
     
     CsmToken.tknPunct pTkn = CsmToken.asPunct( cdef.currToken() );
     jsV val, arg;
-    if ( pTkn==CsmToken.tknPunct.LBrace ){
+    if ( pTkn== CsmToken.tknPunct.LBrace ){
       val = parseListObj( CsmToken.tknPunct.RBrace, depth+1, path + " { " );
-    } else if ( pTkn==CsmToken.tknPunct.LBracket ){
+    } else if ( pTkn== CsmToken.tknPunct.LBracket ){
       val = parseListObj( CsmToken.tknPunct.RBracket, depth+1, path + " [ " );
     } else {
       val = new jsV( parseName(depth, path) );
     }
     pTkn = CsmToken.asPunct( cdef.currToken() );
-    if ( pTkn==CsmToken.tknPunct.LParen ){
+    if ( pTkn== CsmToken.tknPunct.LParen ){
       pTkn = CsmToken.asPunct( cdef.nextToken() );
-      if ( pTkn!=CsmToken.tknPunct.RParen ){
+      if ( pTkn!= CsmToken.tknPunct.RParen ){
         arg = new jsV( cdef.currToken() );
         val.argAdd( arg.toString() );
         pTkn = CsmToken.asPunct( cdef.nextToken() ); 
-        if ( pTkn!=CsmToken.tknPunct.RParen ){
+        if ( pTkn!= CsmToken.tknPunct.RParen ){
           err( "expected )", path );
         }
       }

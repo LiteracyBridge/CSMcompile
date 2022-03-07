@@ -1,6 +1,7 @@
-// CsmCGroup
-import java.util.Map;
+package org.amplio.csm;
+
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class CsmCGroup {
@@ -21,7 +22,7 @@ public class CsmCGroup {
         addTransition(evt, entries.getField(evt).asStr());
     }
   }
-  public CsmCGroup( String name ) {  // nxtState rep for a CsmState
+  public CsmCGroup( String name ) {  // nxtState rep for a org.amplio.CsmState
     nm = name;
   }
   public Set<String> Events(){
