@@ -183,10 +183,13 @@ public class CSMcompile {
   public static void writeSysAudio( PrintWriter cF ){
     cF.println( "static AudioList_t preSysAudio[] = { " );
     cF.println(  CsmAction.SysAudio.size() + ",  // # PlaySys prompts used by CSM " );
+    cF.println( "{ " );
     for( String s: CsmAction.SysAudio )
-      cF.println( "{ \"" + s + "\" }," );
+      cF.println( "\"" + s + "\"," );
     if ( CsmAction.SysAudio.size()==0 )
-      cF.println( "{ \"welcome\" }" );  // so it will compile
+      cF.println( "\"welcome\"" );  // so it will compile
+    cF.println( "} ");
+
     cF.println( "};  // preSysAudio " );
     cF.println(" ");
   }
