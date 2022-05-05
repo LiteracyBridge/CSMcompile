@@ -26,7 +26,7 @@ public class CsmToken {
     AudioStart,           AudioDone,	         ShortIdle,	            LongIdle,	         LowBattery,          //=35
     BattCharging,         BattCharged,           BattMin,               BattMax,             FirmwareUpdate,      //=40
     Timer,                ChargeFault,           LithiumHot,            MpuHot,              FilesSuccess,        //=45
-    FilesFail,            anyKey,                eUNDEF   //=48
+    FilesFail,            BattCharging75,        BattNotCharging,       anyKey,              eUNDEF   //=50
   };
   // MUST MATCH:  ANms[] defined in tknTable.c
   public enum tknAction {  // tknAction -- TBook actions  -- tknGroup==gAction
@@ -113,6 +113,7 @@ public class CsmToken {
     return eventNames.get( idx );
   }
   public static int nEvents(){
+    // TODO: this is completely bogus.
     return eventNames.size()-2;  // anyKey & eUNDEF aren't tokens
   }
   public static tknEvent toEvent( String ename ){

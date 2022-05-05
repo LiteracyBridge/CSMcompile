@@ -1,6 +1,7 @@
 package org.amplio.csm;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -392,12 +393,10 @@ public class CSMcompile {
                                              .defaultHelp(true)
                                              .description("Compile control_dev.txt file.");
       parser.addArgument("--predecessors", "-showPred", "-p")
-            .setDefault(Boolean.FALSE)
-            .type(Boolean.class)
+            .action(Arguments.storeTrue())
             .help("Show predecessor states.");
       parser.addArgument("--successors", "-showSucc", "-s")
-            .setDefault(Boolean.FALSE)
-            .type(Boolean.class)
+            .action(Arguments.storeTrue())
             .help("Show succecessor states.");
       parser.addArgument("source").setDefault("control_def.txt").help("Input control_def.txt file");
       parser.addArgument("preparsed")
