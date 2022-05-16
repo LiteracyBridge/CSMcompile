@@ -114,9 +114,10 @@ public class TokenReader {
         int iQ = cline.indexOf( '"', iChr+1 ); // find matching "
         if (iQ < 0)
           report( "unmatched \" character" );
-        txtTkn = cline.substring( iChr, iQ-iChr+1 );   // including "s
+        txtTkn = cline.substring( iChr, iQ+1 );   // including "s
         tkns.add( new CsmToken( txtTkn ));
         iChr = iQ+1;
+        txtTkn = "";   // start new token
       } else {
         if ( isDlm ) // also add delimiter as token
           tkns.add( new CsmToken( chS ));

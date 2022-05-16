@@ -24,7 +24,8 @@ public class CSMcompile {
 
   //***********************************  CLASS  ***********************************
   private static final String version =
-      "8(2021-10-15)"; // write preloadCSM.c instead of csm_def.h
+      "9(2022-5-16)"; // quoted string tokens-- subString fix, nxtTkn fix
+//    "8(2021-10-15)"; // write preloadCSM.c instead of csm_def.h
 //    "7(2021-10-7)";  // also output csm_data.txt
 //    "6, 2021-05-20 add filesTest action & events";
 //    "5, 2021-05-19 exit immediately on premature EOF";
