@@ -1,8 +1,12 @@
 package org.amplio.csm;
 
+import org.amplio.csm.CsmEnums.tknEvent;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import static org.amplio.csm.CsmEnums.tknEvent.*;
 
 public class CsmCGroup {
   //***********************************  CLASS  ***********************************
@@ -32,11 +36,11 @@ public class CsmCGroup {
     return nxtState.get( evt );
   }
   public void addTransition( String evt, String stnm ){
-    if ( CsmToken.toEvent( evt )==CsmToken.tknEvent.eNull )
+    if ( CsmToken.toEvent( evt )== eNull )
       CSMcompile.Report( "field name '" + evt + "' is not an Event name" );
     int idx = CsmState.asIdx( stnm );  // assign state index
     if ( evt.equals("anyKey") ) {
-      for (  CsmToken.tknEvent e: CsmToken.tknKeys )  // add Home..starTable unless already defined
+      for (  tknEvent e: CsmToken.tknKeys )  // add Home..starTable unless already defined
         if ( !nxtState.containsKey(e.name()) )
           nxtState.put( e.name(), stnm );
     } else

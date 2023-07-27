@@ -61,7 +61,7 @@ public class CSMcompile {
 
         return localDateTime.format(DATE_FORMATTER);
   }
-  public static void writeConfigToPreloadC(jsV def, PrintWriter cF ){
+  public static void writeConfig( jsV def, PrintWriter cF ){
     jsV cfg = def.getField( "config" );
     parsePath = "config";
     if (cfg==null) 
@@ -104,7 +104,7 @@ public class CSMcompile {
       cF.println(" ");
     }
   }
-  public static void writeConfigToCsmData(jsV def, PrintWriter cF ) {
+  public static void wrDataConfig( jsV def, PrintWriter cF ) {
     jsV cfg = def.getField( "config" );
     parsePath = "dataConfig";
     if (cfg==null)
@@ -188,8 +188,8 @@ public class CSMcompile {
     }
   }
       
-  public static void writeSysAudioToPreloadC(PrintWriter cF ){
-    cF.println( "static AudioList_t preSysAudio[] = { " );
+  public static void writeSysAudio( PrintWriter cF ){
+    cF.println( "static AudioList preSysAudio[] = { " );
     cF.println(  CsmAction.SysAudio.size() + ",  // # PlaySys prompts used by CSM " );
     cF.println( "{ " );
     for( String s: CsmAction.SysAudio )
@@ -201,7 +201,7 @@ public class CSMcompile {
     cF.println( "};  // preSysAudio " );
     cF.println(" ");
   }
-  public static void writeSysAudioToCsmData(PrintWriter cF ){
+  public static void wrDataSysAudio( PrintWriter cF ){
     cF.println( CsmAction.SysAudio.size());
     for( String s: CsmAction.SysAudio )
       cF.println( s );
@@ -213,39 +213,44 @@ public class CSMcompile {
       s += " ";
     return s;
   }
-  public static void writeStatesToPreloadC(PrintWriter cF ){
-  //  cF.println( "int   nCSMstates = " + org.amplio.CsmState.nCSMstates + ";  // TBook state machine definition " );
-    for (int i=0; i< CsmState.nCSMstates; i++ ){
-      CsmState st = CsmState.stByIdx( i );
-      if ( st==null ) 
-        CSMcompile.Report( "CState " + i + " is not defined." );
-      else {
-        String aPtrs = "";
-        int np = 18 - st.nm.length();
-        int nA = st.actions.size();
-        if (nA==0 )
-          cF.println( "static ActionList_t a_" + st.nm + pad(np-2) + " = {  0,  { 0 } };" );
-        else {
-          for (int iA = 0; iA < nA; iA++) {
-            CsmAction a = st.actions.get(iA);
-            cF.println("static csmAction_t  a_" + st.nm + "_" + iA + pad(np-4) + " = " + a + ";");
-            aPtrs += (iA == 0 ? "" : ", ") + "&a_" + st.nm + "_" + iA;
-          }
-          cF.println("static ActionList_t a_" + st.nm + pad(np-2) + " = { " + nA + ", { " + aPtrs + " } };");
+
+    public static void writeStates(PrintWriter preloadCsmWriter) {
+        //  cF.println( "int   nCSMstates = " + org.amplio.CsmState.nCSMstates + ";  // TBook state machine definition " );
+        for (int iState = 0; iState<CsmState.nCSMstates; iState++) {
+            CsmState csmState = CsmState.stByIdx(iState);
+            if (csmState == null) CSMcompile.Report("CState " + iState + " is not defined.");
+            else {
+                String aPtrs = "";
+                List<String> actionList = new ArrayList<>();
+                int np = 22 - csmState.nm.length();
+                int numActions = csmState.actions.size();
+                if (numActions == 0) {
+                    // Empty action list.
+                    preloadCsmWriter.printf("static csmAction  *a_%s[]%s = {  };\n", csmState.nm, pad(np-5));
+                } else {
+                    for (int iAction = 0; iAction<numActions; iAction++) {
+                        CsmAction action = csmState.actions.get(iAction);
+                        String actionName = String.format("a_%s_%d", csmState.nm, iAction);
+                        preloadCsmWriter.printf("static csmAction  %s%s = %s;\n", actionName, pad(np-4), action);
+                        actionList.add("&"+actionName);
+                        aPtrs += (iAction == 0 ? "" : ", ") + "&a_" + csmState.nm + "_" + iAction;
+                    }
+                    preloadCsmWriter.printf("static csmAction  *a_%s[]%s = { %s };\n", csmState.nm, pad(np-5), String.join(", ", actionList));
+                }
+                String nxtIdxStr = "";
+                int numEvents = CsmToken.nEvents();
+                for (int iEvent = 0; iEvent<numEvents; iEvent++) {
+                    String eventName = CsmToken.eventName(iEvent);
+                    nxtIdxStr += (iEvent == 0 ? "" : ",") + String.format("%2d", csmState.nxtStIdx(eventName));
+                }
+                preloadCsmWriter.printf("static short      n_%s[]%s = { %s };\n", csmState.nm, pad(np-4), nxtIdxStr);
+                preloadCsmWriter.printf("static CState     %s%s = { %d, \"%s\", %d, n_%s, %d, a_%s }; // [%d]\n\n",
+                    csmState.nm, pad(np), iState, csmState.nm, numEvents, csmState.nm, numActions, csmState.nm, iState);
+            }
         }
-        String nxtIdxStr = "";
-        int nE = CsmToken.nEvents();
-        for (int iEvt=0; iEvt < nE; iEvt++ ){
-          String enm = CsmToken.eventName( iEvt );
-          nxtIdxStr += ( iEvt==0? "" : "," ) + String.format( "%2d", st.nxtStIdx( enm ));
-        }
-        cF.println( "static short        n_" + st.nm + "[]" + pad(np-4)+ " = { " + nxtIdxStr + "};" );
-        cF.println( "static CState_t     " + st.nm + pad(np) + " = { " + i + ", \"" + st.nm + "\", " + nE + ", n_" + st.nm + ", &a_" + st.nm + " };  // [" + i + "] " );
-        cF.println(" ");
-      }
     }
-  }
-  public static void writeStatesToCsmData(PrintWriter cF ){
+
+  public static void wrDataStates( PrintWriter cF ){
     cF.println( CsmState.nCSMstates );
     for (int i=0; i< CsmState.nCSMstates; i++ ) {
       CsmState st = CsmState.stByIdx(i);
@@ -272,38 +277,38 @@ public class CSMcompile {
       }
     }
   }
-  public static void finishPreloadC(PrintWriter cF, String ver ){
-    int nS = CsmState.nCSMstates;
-    cF.println( "static CSList_t  preCSlist = {  " + nS + ", " );
-    cF.println( "  {");
-    String stNms = "";
-    for (int i=0; i< nS; i++ ){
-      CsmState st = CsmState.stByIdx( i );
-      int np = 18 - st.nm.length();
-      if ( st==null )
-        CSMcompile.Report( "CState " + i + " is not defined." );
-      else
-        stNms += pad(np) + "&" + st.nm + ",";
 
-        if ( i%5==4 ){ cF.println( stNms ); stNms = ""; }
+    public static void writeTBookCSM(PrintWriter preloadCsmWriter, String ver) {
+        int numCStates = CsmState.nCSMstates;
+        preloadCsmWriter.printf("static CState  *preCSlist[] = {  \n");
+        StringBuilder stateNames = new StringBuilder();
+        for (int iState = 0; iState<numCStates; iState++) {
+            CsmState csmState = CsmState.stByIdx(iState);
+            int np = 19 - csmState.nm.length();
+            if (csmState == null) CSMcompile.Report("CState " + iState + " is not defined.");
+            else stateNames.append(pad(np)).append("&").append(csmState.nm).append(",");
+            // wrap columns.
+            if (iState%5 == 4) {
+                preloadCsmWriter.println(stateNames);
+                stateNames = new StringBuilder();
+            }
+        }
+        preloadCsmWriter.println(stateNames);
+        preloadCsmWriter.println("};  ");
+
+        preloadCsmWriter.println("static CSM preCSM = { ");
+        preloadCsmWriter.printf("    \"%s\", \n", ver);
+        preloadCsmWriter.printf("    %d, preCSlist", numCStates);
+        preloadCsmWriter.println("};  // preCSM");
+
+        preloadCsmWriter.println(" ");
+        preloadCsmWriter.println("void     preloadCSM( void ){");
+        preloadCsmWriter.println("    csm = &preCSM;");
+        preloadCsmWriter.println("    TB_Config = &preTB_Config;");
+        preloadCsmWriter.println("}  // preloadCSM()");
+        preloadCsmWriter.println(" ");
+        preloadCsmWriter.println("// preloadCSM.cpp ");
     }
-    cF.println( stNms );
-    cF.println( "  }");
-    cF.println( "};  ");
-
-    cF.println( "static CSM_t preCSM = { " );
-    cF.println( "    \"" + ver + "\", " );
-    cF.println( "    &preTB_Config, preSysAudio, &preCSlist" );
-    cF.println( "};  // preCSM");
-
-    cF.println( " " );
-    cF.println( "void     preloadCSM( void ){" );
-    cF.println( "    CSM = &preCSM;" );
-    cF.println( "    TB_Config = &preTB_Config;" );
-    cF.println( "}  // preloadCSM()");
-    cF.println( " ");
-    cF.println( "// preloadCSM.c ");
-  }
 
     public static void main(String[] args) throws Exception {
         Namespace parsedArgs = parseArgs(args);
@@ -325,20 +330,20 @@ public class CSMcompile {
         throws IOException
     {
 
-        File preloadCFile = new File(preparsed_path);
-        File csmDataFile = new File(csm_data_path);
-        PrintWriter preloadCWriter = new PrintWriter(preloadCFile);
-        PrintWriter csmDataWriter = new PrintWriter(csmDataFile);
+        File cFile = new File(preparsed_path);
+        File dFile = new File(csm_data_path);
+        PrintWriter preloadCsmWriter = new PrintWriter(cFile);
+        PrintWriter csmDataWriter = new PrintWriter(dFile);
 
         Path file = Paths.get(source_path);
         BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
         System.out.println("processing " + file.toAbsolutePath() + " of: "
             + formatDateTime(attr.lastModifiedTime()));
 
-        preloadCWriter.println("// preloaded TBook Control State Machine   preloadCSM.c");
-        preloadCWriter.println("// generated by org.amplio.CSMcompile version: " + version);
-        preloadCWriter.println("// run at " + LocalDateTime.now().format(DATE_FORMATTER));
-        preloadCWriter.println(
+        preloadCsmWriter.println("// preloaded TBook Control State Machine   preloadCSM.c");
+        preloadCsmWriter.println("// generated by org.amplio.CSMcompile version: " + version);
+        preloadCsmWriter.println("// run at " + LocalDateTime.now().format(DATE_FORMATTER));
+        preloadCsmWriter.println(
             "// from " + file.toAbsolutePath() + " of: " + formatDateTime(attr.lastModifiedTime()));
         JSONish jsh = new JSONish(file.toAbsolutePath().toString());
         System.out.println("  version: " + jsh.FirstLine);
@@ -354,25 +359,26 @@ public class CSMcompile {
                                                                            " (showing successor states) " :
                                                                            " (no -showSucc)"));
 
-        preloadCWriter.println("#include \"packageData.h\" ");
-        preloadCWriter.println("//Ver:   " + jsh.FirstLine);
+        preloadCsmWriter.println("#include \"packageData.h\" ");
+        preloadCsmWriter.println("#include \"csm.h\" ");
+        preloadCsmWriter.println("//Ver:   " + jsh.FirstLine);
 
-        writeConfigToPreloadC(def, preloadCWriter);  // initState will be state 0
-        writeConfigToCsmData(def, csmDataWriter); // writeConfig to csm_data.txt
+        writeConfig(def, preloadCsmWriter);  // initState will be state 0
+        wrDataConfig(def, csmDataWriter); // writeConfig to csm_data.txt
 
         buildCSM(def);
 
-        writeSysAudioToPreloadC(preloadCWriter);
-        writeSysAudioToCsmData(csmDataWriter);
+        writeSysAudio(preloadCsmWriter);
+        wrDataSysAudio(csmDataWriter);
 
-        writeStatesToPreloadC(preloadCWriter);
-        writeStatesToCsmData(csmDataWriter);
+        writeStates(preloadCsmWriter);
+        wrDataStates(csmDataWriter);
         csmDataWriter.close();
         System.out.println("org.amplio.CSMcompile wrote " + csm_data_path);
 
-        finishPreloadC(preloadCWriter, jsh.FirstLine);
+        writeTBookCSM(preloadCsmWriter, jsh.FirstLine);
 
-        preloadCWriter.close();
+        preloadCsmWriter.close();
 
         if (ErrorCount>0) {
             System.out.println("org.amplio.CSMcompile reported " + ErrorCount
@@ -401,10 +407,12 @@ public class CSMcompile {
             .help("Show succecessor states.");
       parser.addArgument("source").setDefault("control_def.txt").help("Input control_def.txt file");
       parser.addArgument("preparsed")
-            .setDefault("preloadCSM.c")
-            .help("Output pre-parsed preloadCSM.c file");
+            .setDefault("preloadCSM.cpp")
+            .required(false)
+            .help("Output pre-parsed preloadCSM.cpp file");
       parser.addArgument("csm_data")
             .setDefault("csm_data.txt")
+            .required(false)
             .help("Output compiled csm_data.txt");
       Namespace namespace = null;
       try {

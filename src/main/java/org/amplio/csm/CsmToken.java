@@ -1,5 +1,8 @@
 package org.amplio.csm;// org.amplio.CsmToken
 
+import org.amplio.csm.CsmEnums.tknAction;
+import org.amplio.csm.CsmEnums.tknEvent;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -17,41 +20,14 @@ public class CsmToken {
   public enum tknPunct {  // tknPunct -- org.amplio.JSONish punctuation tokens  -- tknGroup==gPunct
     pNull, Comma, Semi, Colon, LBrace, RBrace, LBracket, RBracket, LParen, RParen, DQuote 
   };
-  // MUST MATCH:  ENms[] defined in tknTable.c
-  public enum tknEvent {  // tknEvent -- TBook event types  -- tknGroup==gEvent
-    eNull, 
-    Home,     Circle,     Plus,      Minus,      Tree,      Lhand,      Rhand,      Pot,     Star,     Table,     //=10
-    Home__,   Circle__,   Plus__,    Minus__,    Tree__,    Lhand__,    Rhand__,    Pot__,   Star__,   Table__,   //=20
-    starHome, starCircle, starPlus,  starMinus,  starTree,  starLhand,  starRhand,  starPot, starStar, starTable, //=30
-    AudioStart,           AudioDone,	         ShortIdle,	            LongIdle,	         LowBattery,          //=35
-    BattCharging,         BattCharged,           BattMin,               BattMax,             FirmwareUpdate,      //=40
-    Timer,                ChargeFault,           LithiumHot,            MpuHot,              FilesSuccess,        //=45
-    FilesFail,            BattCharging75,        BattNotCharging,       anyKey,              eUNDEF   //=50
-  };
-  // MUST MATCH:  ANms[] defined in tknTable.c
-  public enum tknAction {  // tknAction -- TBook actions  -- tknGroup==gAction
-    aNull,
-    LED,        bgLED,     playSys,
-    playSubj,   pausePlay, resumePlay,
-    stopPlay,   volAdj,    spdAdj,
-    posAdj,     startRec,  pauseRec,
-    resumeRec,  finishRec, playRec,
-    saveRec,    writeMsg,  goPrevSt,
-    saveSt,     goSavedSt, subjAdj,
-    msgAdj,     setTimer,  resetTimer,
-    showCharge, startUSB,  endUSB,
-    powerDown,  sysBoot,   sysTest,
-    playNxtPkg, changePkg, playTune,
-    filesTest
-  };
 
-  public static EnumSet<tknEvent> tknKeys = EnumSet.range( tknEvent.Home, tknEvent.starTable );
+  public static EnumSet<tknEvent> tknKeys = EnumSet.range( tknEvent.Home, tknEvent.starTable);
 
   private static Map< String, tknGroup > predefTokens = new HashMap< String, tknGroup >();    // map known token strings to enum tknGroup
   
   private static Map< String, tknPunct > punctTokens = new HashMap< String, tknPunct >();     // map punct 1 char strings to enum tknPunct
   private static Map< String, tknEvent > eventTokens = new HashMap< String, tknEvent >();     // map event strings to enum tknEvent
-  private static Map< String, tknAction > actionTokens = new HashMap< String, tknAction >();   // map action strings to enum tknAction
+  private static Map< String, tknAction> actionTokens = new HashMap< String, tknAction >();   // map action strings to enum tknAction
 
   private static List<String> eventNames = new ArrayList< String >();     // event strings in tknEvent order
 
