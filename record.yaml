@@ -1,0 +1,38 @@
+{
+  CGroups: {
+    whenRecording:{ Pot           : stRecordingPaused,
+                    Star          : stRecordingDone,
+    },
+    reviewNav:    { Home          : stEndRecordingHome,
+                    Star          : stBeginRecording,
+                    Tree          : stEndRecording,
+                    Table         : stEndRecording,
+                    Lhand         : stEndRecording,
+                    Rhand         : stEndRecording,
+                    Circle        : stEndRecording,
+    },
+    whenReviewing:{ Pot           : stReviewPaused,
+                    Plus          : stReviewLouder,
+                    Minus         : stReviewSofter,
+    },
+  },
+
+  CStates: {
+    stBeginRecording: { Actions: [ playSys(s1begin) ],                    CGroups: [ whenRecording ], AudioDone: stRecording },
+    # Start recording and time out after 30 minutes. 30*60*1000 = 1800000 ms
+    stRecording:       { Actions: [ setTimer(1800000), startRecording ],        CGroups: [ whenRecording ], Timer: stRecordingDone, },
+    stRecordingPaused: { Actions: [ saveState(3), pauseRecording ],                Pot: stReviewResumed, },
+    stRecordingResumed:{ Actions: [ resumeRecording, resumeSavedState(3) ],            CGroups: [ whenRecording ], },
+
+    stRecordingDone:   { Actions: [ finishRecording, playSys(s1Recorded) ],     AudioDone: stReviewing, },
+    stReviewing:       { Actions: [ playRecording ],                            CGroups: [ reviewNav, whenReviewing ], AudioDone: stEndRecording, },
+    stReviewLouder:    { Actions: [ volAdj(+1), resumePrevState ],               CGroups: [ reviewNav, whenReviewing ], },
+    stReviewSofter:    { Actions: [ volAdj(-1), resumePrevState ],               CGroups: [ reviewNav, whenReviewing ], },
+    stReviewPaused:    { Actions: [ saveState(3), pausePlay ],               CGroups: [ reviewNav, whenReviewing ], Pot: stReviewResumed, },
+    stReviewResumed:   { Actions: [ resumePlay, resumeSavedState(3) ],           CGroups: [ reviewNav, whenReviewing ], },
+
+    stEndRecording:    { Actions: [ saveRecording(sv), LED(_), exitScript(OK) ],},
+    stEndRecordingHome:{ Actions: [ saveRecording(del), exitScript(CANCEL) ],   },
+
+  }
+}

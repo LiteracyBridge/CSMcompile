@@ -1,0 +1,150 @@
+{
+  Props: { Label: Survey 1, },
+  CGroups: {
+    whenPlaying: { Plus:  stPlayLouder,
+                   Minus: stPlaySofter,
+                   Home:  stHomePressed,
+                   Pot:   stPlayPause,
+    },
+  },
+  CStates: {
+     stEnter: { Actions: [ subjAdj(0), msgAdj(0), playSubject(msg) ], CGroups: [ whenPlaying ], Tree: s1q1, Table: s1q1},
+
+     stPlayPause:    { Actions: [ saveState( 2),  setTimer(180000), pausePlay ], CGroups:[ whenPlaying ], Pot: stPlayResume, Timer: homeExit },
+     stPlayResume:   { Actions: [ resumePlay,  resumeSavedState(2) ],            },
+
+
+    # 1. How many nurses were present at the time of your visit?
+     s1q1: { Actions: [ beginSurvey(survey1), enterState(s1q1prompt) ]},
+     s1q1prompt: { Actions: [msgAdj(1), playSubject(msg) ], CGroups: [ whenPlaying ], AudioDone: s1q1wait, Circle: s1q1prompt, Pot__: s1q1noResponse },
+     s1q1wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q1None, Table: s1q1One, Lhand: s1q1moreThanOne, Rhand: s1q1DontKnow, Pot: s1q1noResponse, Circle: s1q1prompt },
+     s1q1None: { Actions: [writeMsg(s1q1=None), enterState(s1q2)]},
+     s1q1One: { Actions: [writeMsg(s1q1=One), enterState(s1q2)]},
+     s1q1moreThanOne: { Actions: [writeMsg(s1q1=More than one), enterState(s1q2)]},
+     s1q1DontKnow:  { Actions: [writeMsg(s1q1=Don't know), enterState(s1q2)]},
+     s1q1noResponse: { Actions: [writeMsg(s1q1=No response), enterState(s1q2)]},
+
+    # 2. How long did you wait before you were attended to?
+     s1q2: { Actions: [ playTune(A/A/) ], AudioDone: s1q2prompt },
+     s1q2prompt: { Actions: [msgAdj(2), playSubject(msg) ], CGroups: [ whenPlaying ], AudioDone: s1q2wait, Circle: s1q2prompt, Pot__: s1q2noResponse },
+     s1q2wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q2waitUnder15, Table: s1q2wait15to30, Lhand: s1q2wait30to60, Rhand: s1q2waitOver60, Pot: s1q2noResponse, Circle: s1q2prompt },
+     s1q2waitUnder15: { Actions: [writeMsg(s1q2=Less than 15), enterState(s1q3)] },
+     s1q2wait15to30: { Actions: [writeMsg(s1q2=15 to 30), enterState(s1q3)] },
+     s1q2wait30to60: { Actions: [writeMsg(s1q2=30 to 60), enterState(s1q3)] },
+     s1q2waitOver60: { Actions: [writeMsg(s1q2=More than 60), enterState(s1q3)] },
+     s1q2noResponse: { Actions: [writeMsg(s1q2=No response), enterState(s1q3)] },
+
+    # 3. How clean is the facility/venue used for delivering the services?
+     s1q3: { Actions: [ playTune(A/A/) ], AudioDone: s1q3prompt },
+     s1q3prompt: { Actions: [msgAdj(3), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q3wait, Circle: s1q3prompt },
+     s1q3wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q3veryClean, Table: s1q3Clean, Lhand: s1q3notClean, Rhand: s1q3dontknow, Pot: s1q3noResponse, Circle: s1q3prompt },
+     s1q3veryClean: { Actions: [writeMsg(s1q3=Very clean), enterState(s1q4)] },
+     s1q3Clean:     { Actions: [writeMsg(s1q3=Clean), enterState(s1q4)] },
+     s1q3notClean:  { Actions: [writeMsg(s1q3=Not clean), enterState(s1q4)] },
+     s1q3dontknow:  { Actions: [writeMsg(s1q3=Don't know), enterState(s1q4)] },
+     s1q3noResponse:{ Actions: [writeMsg(s1q3=No response), enterState(s1q4)] },
+
+    # 4. Did the nurse communicate to you in the language that you understand?
+     s1q4: { Actions: [ playTune(A/A/) ], AudioDone: s1q4prompt },
+     s1q4prompt: { Actions: [msgAdj(4), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q4wait, Circle: s1q4prompt },
+     s1q4wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q4Yes, Table: s1q4No, Pot: s1q4noResponse, Circle: s1q4prompt },
+     s1q4Yes: { Actions: [writeMsg(s1q4=Yes), enterState(s1q5)]},
+     s1q4No:  { Actions: [writeMsg(s1q4=No), enterState(s1q5)]},
+     s1q4noResponse:  { Actions: [writeMsg(s1q4=No response), enterState(s1q5)]},
+
+    # 5. If you were recommended a medication, did the facility/nurse have it available?
+     s1q5: { Actions: [ playTune(A/A/) ], AudioDone: s1q5prompt },
+     s1q5prompt: { Actions: [msgAdj(5), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q5wait, Circle: s1q5prompt, Pot__: s1q5noResponse },
+     s1q5wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q5Yes, Table: s1q5No, Pot: s1q5noResponse, Circle: s1q5prompt },
+     s1q5Yes: { Actions: [writeMsg(s1q5=Yes), enterState(s1q6)]},
+     s1q5No:  { Actions: [writeMsg(s1q5=No), enterState(s1q6)]},
+     s1q5noResponse:  { Actions: [writeMsg(s1q5=No response), enterState(s1q6)]},
+
+    # 6. If you were given a medication, did the nurse teach you how to take it?
+     s1q6: { Actions: [ playTune(A/A/) ], AudioDone: s1q6prompt },
+     s1q6prompt: { Actions: [msgAdj(6), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q6wait, Circle: s1q6prompt, Pot__: s1q6noResponse },
+     s1q6wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q6Yes, Table: s1q6No, Pot: s1q6noResponse, Circle: s1q6prompt },
+     s1q6Yes: { Actions: [writeMsg(s1q6=Yes), enterState(s1q7)]},
+     s1q6No:  { Actions: [writeMsg(s1q6=No), enterState(s1q7)]},
+     s1q6noResponse:  { Actions: [writeMsg(s1q6=No response), enterState(s1q7)]},
+
+    # 7. Did the nurse advise you on your general health/that of your child?
+     s1q7: { Actions: [ playTune(A/A/) ], AudioDone: s1q7prompt },
+     s1q7prompt: { Actions: [msgAdj(7), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q7wait, Circle: s1q7prompt, Pot__: s1q7noResponse },
+     s1q7wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q7Yes, Table: s1q7No, Pot: s1q7noResponse, Circle: s1q7prompt },
+     s1q7Yes: { Actions: [writeMsg(s1q7=Yes), enterState(s1q8)]},
+     s1q7No:  { Actions: [writeMsg(s1q7=No), enterState(s1q8)]},
+     s1q7noResponse:  { Actions: [writeMsg(s1q7=No response), enterState(s1q8)]},
+
+    # 8. Did you pay any fees for the services?
+     s1q8: { Actions: [ playTune(A/A/) ], AudioDone: s1q8prompt },
+     s1q8prompt: { Actions: [msgAdj(8), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q8wait, Circle: s1q8prompt, Pot__: s1q8noResponse },
+     s1q8wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q8Yes, Table: s1q8No, Pot: s1q8noResponse, Circle: s1q8prompt },
+     s1q8Yes: { Actions: [writeMsg(s1q8=Yes), enterState(s1q9)]},
+     s1q8No:  { Actions: [writeMsg(s1q8=No), enterState(s1q10)]},
+     s1q8noResponse:  { Actions: [writeMsg(s1q8=No response), enterState(s1q10)]},
+
+    # 9. If user paid a fee, why?
+     s1q9: { Actions: [ playTune(A/A/) ], AudioDone: s1q9prompt },
+     s1q9prompt: { Actions: [msgAdj(9), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q9wait, Circle: s1q9prompt, Pot__: s1q9noResponse },
+     s1q9wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q9noCard, Table: s1q9notCovered, Lhand: s1q9noReason, Pot: s1q9noResponse, Circle: s1q9prompt },
+     s1q9noCard: { Actions: [writeMsg(s1q9=No card), enterState(s1q10)] },
+     s1q9notCovered: { Actions: [writeMsg(s1q9=Not covered), enterState(s1q10)] },
+     s1q9noReason:  { Actions: [writeMsg(s1q9=No reason), enterState(s1q10)] },
+     s1q9noResponse:{ Actions: [writeMsg(s1q9=No response), enterState(s1q10)] },
+
+    # 10. What services did you come/go for? Prompt to press star to record.
+     s1q10: { Actions: [ playTune(A/A/) ], AudioDone: s1q10prompt },
+     s1q10prompt: { Actions: [msgAdj(10), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q10wait, Circle: s1q10prompt, Pot__: s1q10noResponse },
+     s1q10wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Star: s1q10record, Pot: s1q10noResponse, Circle: s1q10prompt },
+     s1q10record:{ Actions: [callScript(record)], OK: s1q10recorded, CANCEL: s1q10 },
+     s1q10recorded: { Actions: [writeRecId(s1q10), enterState(s1q11)] },
+     s1q10noResponse:{ Actions: [writeMsg(s1q10=No response), enterState(s1q11)] },
+
+
+       # 11. Did you receive all the services that you needed?
+     s1q11: { Actions: [ playTune(A/A/) ], AudioDone: s1q11prompt },
+     s1q11prompt: { Actions: [msgAdj(11), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q11wait, Circle: s1q11prompt, Pot__: s1q11noResponse },
+     s1q11wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q11Yes, Table: s1q11No, Pot: s1q11noResponse, Circle: s1q11prompt },
+     s1q11Yes: { Actions: [writeMsg(s1q11=Yes), enterState(s1q13)]},
+     s1q11No:  { Actions: [writeMsg(s1q11=No), enterState(s1q12)]},
+     s1q11noResponse:  { Actions: [writeMsg(s1q11=No response), enterState(s1q13)]},
+
+    # 12: What is the reason? (Prompt to press star to record.)
+     s1q12: { Actions: [ playTune(A/A/) ], AudioDone: s1q12prompt },
+     s1q12prompt: { Actions: [msgAdj(12), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q12wait, Circle: s1q12prompt, Pot__: s1q12noResponse },
+     s1q12wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Star: s1q12record, Pot: s1q12noResponse, Circle: s1q12prompt },
+     s1q12record: { Actions: [ callScript(record) ], OK: s1q12recorded, CANCEL: s1q12 },
+     s1q12recorded: { Actions: [ writeRecId(s1q12), enterState(s1q13) ] },
+     s1q12noResponse:{ Actions: [writeMsg(s1q12=No response), enterState(s1q13)] },
+
+       # 13. How willing are you to visit the facility again?
+     s1q13: { Actions: [ playTune(A/A/) ], AudioDone: s1q13prompt },
+     s1q13prompt: { Actions: [msgAdj(13), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q13wait, Circle: s1q13prompt, Pot__: s1q13noResponse },
+     s1q13wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Tree: s1q13veryWilling, Table: s1q13willing, Lhand: s1q13notWilling, Rhand: s1q13dontKnow, Pot: s1q13noResponse, Circle: s1q13prompt },
+     s1q13veryWilling: { Actions: [writeMsg(s1q13=Very willing), enterState(s1q14)] },
+     s1q13willing:     { Actions: [writeMsg(s1q13=Willing), enterState(s1q14)] },
+     s1q13notWilling:  { Actions: [writeMsg(s1q13=Not willing), enterState(s1q14)] },
+     s1q13dontKnow:  { Actions: [writeMsg(s1q13=Don't know), enterState(s1q14)] },
+     s1q13noResponse:{ Actions: [writeMsg(s1q13=No response), enterState(s1q14)] },
+
+     # 14: What suggestions do you have for the nurse?
+     s1q14: { Actions: [ playTune(A/A/) ], AudioDone: s1q14prompt },
+     s1q14prompt: { Actions: [msgAdj(14), playSubject(msg)], CGroups: [ whenPlaying ], AudioDone: s1q14wait, Circle: s1q14prompt, Pot__: s1q14noResponse },
+     s1q14wait: { Actions: [ playTune(A/) ], CGroups: [ whenPlaying ], Star: s1q14record, Pot: s1q14noResponse, Circle: s1q14prompt },
+     s1q14record: { Actions: [ callScript(record) ], OK: s1q14recorded, CANCEL: s1q14 },
+     s1q14recorded: { Actions: [ writeRecId(s1q14), enterState(end) ] },
+     s1q14noResponse:{ Actions: [writeMsg(s1q14=No response), enterState(end)] },
+
+     end: { Actions: [writeMsg(complete=Yes), msgAdj(15), playSubject(msg) ], CGroups: [ whenPlaying ], Tree: exit },
+     exit: { Actions: [ endSurvey, exitScript(Home) ] },
+
+     stPlayLouder:   { Actions: [ volAdj(+1),  resumePrevState ],  },
+     stPlaySofter:   { Actions: [ volAdj(-1),  resumePrevState ],  },
+
+     stHomePressed:  { Actions: [ saveState(1), playSys(s1confirm) ], Tree: homeExit, Table: homeContinue },
+     homeExit:       { Actions: [ writeMsg(complete=No), exitScript(Home) ] },
+     homeContinue:   { Actions: [ resumeSavedState(1) ] },
+
+  }
+}
