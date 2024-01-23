@@ -1,0 +1,133 @@
+{
+  CGroups: {
+    whenSleeping:  { Home:       stWakeup },
+    whenAwake:     { Home:       stWakeup,
+                     Home__:     stGoSleep,
+                     LongIdle:   stSleepy,
+                     BattMin:    stOnBattMin,
+                     starPlus:   stUSBmode,
+                   },
+    whenUSB:       { starPlus:   stCloseUSB,
+                     BattMin:    stOnBattMin,
+                   },
+    whenPlaying:   { Plus:       stPlayLouder,
+                     Minus:      stPlaySofter,
+                     Pot:        stPlayPause,
+                     Lhand__:    stPlayJumpBack,
+                     Rhand__:    stPlayJumpFwd },
+    whenPlayPaused:{ Pot:        stPlayResume },
+    whenNav:       { Lhand:      stOnPrevSubj,
+                     Rhand:      stOnNextSubj,
+                     AudioDone:  stWait,
+                     ShortIdle:  stWait,
+                     Star:       stBeginRecording,
+                   },
+    whenNavSubjs:  { Tree:       stEnterSubjNext,
+                     Tree__:     stEnterRepeat,
+                     Table:      stEnterSubjPrev,
+                   },
+    whenNavMsgs:   { Tree:       stOnNextMsg,
+                     Tree__:     stOnRepeatMsg,
+                     Table:      stOnPrevMsg,
+                   },
+    whenRecording:       { Pot:     stRecordingPaused,
+                           Star:    stRecordingDone },
+    whenRecordingPaused: { Pot:     stRecordingResumed },
+    reviewNav:           { Home:    stEndRecordingHome,
+                           Star:    stRecordAnother,
+                           Tree:    stEndRecording,
+                           Table:   stEndRecording,
+                           Lhand:   stEndRecording,
+                           Rhand:   stEndRecording,
+                           Circle:  stEndRecording },
+    whenReviewing:       { Pot:     stReviewPaused,
+                           Plus:    stReviewLouder,
+                           Minus:   stReviewSofter },
+    whenReviewPaused:    { Pot:     stReviewResumed },
+
+    whenIdle:      { starPlus:   stUSBmode,
+                     Plus:       stIdleLouder,
+                     Minus:      stIdleSofter,
+                     starMinus:  stShowBatt,
+                     Circle__:   stChgPkg,
+                     starCircle: stNxtPkg },
+  },
+  CStates: {
+    stWakeup:       { Actions: [ LED(_), bgLED(bgPulse), changePkg, playSys(10) ], CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stWelcoming },
+    stWelcoming:    {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioDone: stPromptSubj },
+    stPromptSubj:   { Actions: [ playSys(11) ],                                 CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stPromptingSub },
+    stPromptingSub: {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioDone: stWait },
+
+    stWait:         {                                                           CGroups:[ whenAwake, whenNav, whenNavSubjs, whenIdle ] },
+    stSleepy:       { Actions: [ bgLED(O_9), saveState(1), setTimer(5000) ],    CGroups:[ whenAwake ], anyKey: stUnSleepy, Timer: stGoSleep },
+    stUnSleepy:     { Actions: [ bgLED(bgPulse), resumeSavedState(1) ],         CGroups:[ whenAwake ] },
+    stGoSleep:      { Actions: [ playTune(H/+), bgLED(_), LED(R), setTimer(1000) ], CGroups:[ whenSleeping ], Timer: stFallAsleep },
+    stFallAsleep:   { Actions: [ powerDown ],                                   CGroups:[ whenSleeping ] },
+
+    stPlayLouder:   { Actions: [ volAdj(+1),  resumePrevState ],                CGroups:[ whenAwake, whenPlaying ] },
+    stPlaySofter:   { Actions: [ volAdj(-1),  resumePrevState ],                CGroups:[ whenAwake, whenPlaying ] },
+    # It would be nice to reference "long idle" here.
+    stPlayPause:    { Actions: [ saveState( 2),  setTimer(180000), pausePlay ], CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs, whenPlayPaused ], Timer: stSleepy },
+    stPlayResume:   { Actions: [ resumePlay,  resumeSavedState(2) ],            CGroups:[ whenAwake, whenPlaying, whenNavSubjs ] },
+    stPlayJumpBack: { Actions: [ posAdj(-10), resumePrevState ],                CGroups:[ whenAwake, whenPlaying, whenNavSubjs ] },
+    stPlayJumpFwd:  { Actions: [ posAdj(+45), resumePrevState ],                CGroups:[ whenAwake, whenPlaying, whenNavSubjs ] },
+
+    # Navigating between the playlists / subjects
+    stOnPrevSubj:   { Actions: [ subjAdj(-1),  playSubject(nm) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stAnnouncing },
+    stOnNextSubj:   { Actions: [ subjAdj(+1),  playSubject(nm) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stAnnouncing },
+    stAnnouncing:   {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioDone: stInvitation },
+    stInvitation:   { Actions: [ playSubject(pr) ],                             CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioDone: stPromptNextSubj },
+    stPromptNextSubj:{ Actions: [ playSys(41) ],                                CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ] },
+
+    # Entering a playlist / subject
+    stEnterSubjPrev:{ Actions: [ callScript, enterState(stOnPrevMsg) ],         CGroups:[ whenAwake, whenNav, whenNavSubjs ] },
+    stEnterSubjNext:{ Actions: [ callScript, enterState(stOnNextMsg) ],         CGroups:[ whenAwake, whenNav, whenNavSubjs ] },
+    stEnterRepeat:  { Actions: [ callScript, enterState(stOnRepeatMsg) ],       CGroups:[ whenAwake, whenNav, whenNavSubjs ] },
+
+    # Navigating within a playlist / subject
+    stMsgPause:     { Actions: [ saveState( 2),  setTimer(180000), pausePlay ], CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs, whenPlayPaused ], Pot: stMsgResume, Timer: stSleepy },
+    stMsgResume:    { Actions: [ resumePlay,  resumeSavedState(2) ],            CGroups:[ whenAwake, whenPlaying, whenNavMsgs ] },
+
+    stOnPrevMsg:    { Actions: [ msgAdj(-1),  playSubject(msg) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioStart: stPlaying },
+    stOnNextMsg:    { Actions: [ msgAdj(+1),  playSubject(msg) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioStart: stPlaying },
+    stPlaying:      {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioDone: stInterMsg },
+    stInterMsg:     { Actions: [ playSys(9) ],                                  CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioDone: stWait },
+    
+    stOnRepeatMsg:  { Actions: [ msgAdj(+1),  playSubject(msg) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioStart: stRepeating },
+    stRepeating:    {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioDone: stOnRepeatMsg },
+
+    #
+    # One-touch implementation of recording
+    #
+    stBeginRecording:   { Actions: [ saveState(2), playSys(1) ],                CGroups:[ whenAwake, whenRecording], AudioDone: stRecording },
+    stRecordAnother:    { Actions: [ playSys(1) ],                              CGroups:[ whenAwake, whenRecording], AudioDone: stRecording },
+    # Start recording and time out after 30 minutes. 30*60*1000 = 1800000 ms
+    stRecording:        { Actions: [ setTimer(1800000), startRecording ],       CGroups:[ whenAwake, whenRecording], Timer: stRecordingDone },
+    stRecordingPaused:  { Actions: [ saveState(3), pauseRecording ],            CGroups:[ whenAwake, whenRecordingPaused] },
+    stRecordingResumed: { Actions: [ resumeRecording, resumeSavedState(3) ],    CGroups:[ whenAwake, whenRecording] },
+
+    stRecordingDone:    { Actions: [ finishRecording, playSys(3) ],             CGroups:[ whenAwake], AudioDone: stReviewing },
+    stReviewing:        { Actions: [ playRecording ],                           CGroups:[ whenAwake, reviewNav, whenReviewing ], AudioDone: stEndRecording },
+    stReviewLouder:     { Actions: [ volAdj(+1), resumePrevState ],             CGroups:[ whenAwake, reviewNav, whenReviewing ] },
+    stReviewSofter:     { Actions: [ volAdj(-1), resumePrevState ],             CGroups:[ whenAwake, reviewNav, whenReviewing ] },
+    stReviewPaused:     { Actions: [ saveState(3), pausePlay ],                 CGroups:[ whenAwake, reviewNav, whenReviewPaused ] },
+    stReviewResumed:    { Actions: [ resumePlay, resumeSavedState(3) ],         CGroups:[ whenAwake, reviewNav, whenReviewing ] },
+
+    stEndRecording:     { Actions: [ saveRecording(sv), LED(_), resumeSavedState(2) ] },
+    stEndRecordingHome: { Actions: [ saveRecording(sv), setTimer(100) ],        Timer: stWakeup },
+
+
+    stIdleLouder:   { Actions: [ volAdj(+1), playSys(0),  resumePrevState ],    CGroups:[ whenAwake, whenPlaying ] },
+    stIdleSofter:   { Actions: [ volAdj(-1), playSys(0),  resumePrevState ],    CGroups:[ whenAwake, whenPlaying ] },
+    stUSBmode:      { Actions: [ bgLED(R2_8G2_8), startUSB ],                   CGroups:[ whenUSB ] },
+    stCloseUSB:     { Actions: [ endUSB, bgLED(G_29), setTimer(1000) ],         Timer: stWakeup },
+
+    stShowBatt:     { Actions: [ showCharge,  resumePrevState ],                CGroups:[ whenAwake, whenIdle ] },
+
+    stOnBattMin:    { Actions: [ bgLED(R20_30),  setTimer(5000) ],              CGroups:[ whenSleeping ], Timer: stFallAsleep },
+
+    stNxtPkg:       { Actions: [ playNxtPkg ],                                  CGroups:[ whenAwake, whenIdle ] },
+    stChgPkg:       { Actions: [ changePkg ],                                   CGroups:[ whenAwake, whenIdle, whenNavSubjs ] },
+  }   # CStates
+}     # control.def
+
