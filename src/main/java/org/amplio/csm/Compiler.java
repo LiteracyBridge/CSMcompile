@@ -15,6 +15,7 @@ import static org.amplio.csm.CsmData.eventNames;
 
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class Compiler {
+    // Match "name" or "name(arg)"
     static final Pattern ACTION_ARG = Pattern.compile("(\\w*)(?:\\((.*)\\))?");
     private final CsmData csmData;
 
@@ -29,6 +30,13 @@ public class Compiler {
         ok = validateCStates() && ok;
         csmData.ok = ok;
         return ok;
+    }
+
+    List<String> validate() {
+        List<String> errors = new ArrayList<>();
+        if (!csmData.isValid())
+            csmData.fillErrors(errors);
+        return errors.isEmpty() ? null : errors;
     }
 
     boolean validateCStates() {
@@ -68,7 +76,7 @@ public class Compiler {
                             continue;
                         }
                     }
-                    result.actions.add(new CsmData.CAction(actionName, actionArg));
+                    result.actions.add(csmData.new CAction(actionName, actionArg));
                 } else {
                     errors.add("Unknown action '" + action + "'");
                 }

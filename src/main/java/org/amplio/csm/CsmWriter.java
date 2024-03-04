@@ -28,6 +28,9 @@ public class CsmWriter{
         OutputStream cos,
         boolean verbose)
     {
+        if (!csmData.isValid()) {
+            throw new IllegalStateException("CsmData must be valid.");
+        }
         this.csmData = csmData;
         this.cos = new CsmOutputStream(cos);
         this.verbose = verbose;
@@ -49,50 +52,50 @@ public class CsmWriter{
         cos.close();
     }
 
-    private class Version{
-        int major, minor;
-
-        Version(int v) {
-            major = v;
-            minor = 0;
-        }
-
-        int BYTES = 2;
-
-        void emit() throws IOException {
-            cos.writeU8(major);
-            cos.writeU8(minor);
-        }
-    }
-
-    private class Action{
-        int actionId, argOffset;
-
-        Action(int a, int o) {
-            actionId = a;
-            argOffset = o;
-        }
-
-        int BYTES = 4;
-
-        void emit() throws IOException {
-            cos.writeU16(actionId);
-            cos.writeU16(argOffset);
-        }
-    }
+//    private class Version{
+//        int major, minor;
+//
+//        Version(int v) {
+//            major = v;
+//            minor = 0;
+//        }
+//
+//        int BYTES = 2;
+//
+//        void emit() throws IOException {
+//            cos.writeU8(major);
+//            cos.writeU8(minor);
+//        }
+//    }
+//
+//    private class Action{
+//        int actionId, argOffset;
+//
+//        Action(int a, int o) {
+//            actionId = a;
+//            argOffset = o;
+//        }
+//
+//        int BYTES = 4;
+//
+//        void emit() throws IOException {
+//            cos.writeU16(actionId);
+//            cos.writeU16(argOffset);
+//        }
+//    }
 
     private void emitVersion(int major, int minor) throws IOException {
         cos.writeU8(major);
         cos.writeU8(minor);
     }
 
-    private void emitVersion(int version) throws IOException {emitVersion(version, 0);}
+//    private void emitVersion(int version) throws IOException {emitVersion(version, 0);}
 
-    private int versionSize() {return 2;}
+//    private int versionSize() {return 2;}
 
-    private void emitStateIx(int ix) throws IOException {cos.writeU8(ix);}
+//    private void emitStateIx(int ix) throws IOException {cos.writeU8(ix);}
 
-    private int stateIxSize() {return 1;}
+//    private int stateIxSize() {return 1;}
 
     private void emitLabel() throws IOException {
         final DateFormat ISO8601 = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss.SSS'Z'",

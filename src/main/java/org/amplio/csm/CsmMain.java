@@ -37,7 +37,11 @@ public class CsmMain {
         System.out.println("CsmMain version: " + version);
 
         CsmMain main = new CsmMain(parsedArgs);
-        main.compile(source_path, output_path);
+        if (parsedArgs.getBoolean("decompile")) {
+            main.decompile(source_path);
+        } else {
+            main.compile(source_path, output_path);
+        }
     }
 
     public CsmMain(Namespace parsedArgs) {
@@ -77,6 +81,15 @@ public class CsmMain {
         }
     }
 
+    private void decompile(String source_path) throws IOException {
+        File source = new File(source_path);
+
+        Decompiler decompiler = new Decompiler(source);
+        decompiler.read();
+        CsmData csmData = decompiler.getCsmData();
+        csmData.asYaml = false;
+        System.out.println(csmData.toString());
+    }
 
     /**
      * Define and parse arguments for the main program.
@@ -94,6 +107,7 @@ public class CsmMain {
         parser.addArgument("--output").required(false).help("Output .csm file. Default ${input}.csm");
         parser.addArgument("--list", "-l").required(false).help("Create a YAML listing of the script").action(Arguments.storeTrue());
         parser.addArgument("--verbose", "-v").action(Arguments.storeTrue());
+        parser.addArgument("--decompile", "-d").action(Arguments.storeTrue());
 
         Namespace namespace = null;
         try {
