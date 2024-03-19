@@ -52,52 +52,40 @@ public class CsmWriter{
         cos.close();
     }
 
-//    private class Version{
-//        int major, minor;
-//
-//        Version(int v) {
-//            major = v;
-//            minor = 0;
-//        }
-//
-//        int BYTES = 2;
-//
-//        void emit() throws IOException {
-//            cos.writeU8(major);
-//            cos.writeU8(minor);
-//        }
-//    }
-//
-//    private class Action{
-//        int actionId, argOffset;
-//
-//        Action(int a, int o) {
-//            actionId = a;
-//            argOffset = o;
-//        }
-//
-//        int BYTES = 4;
-//
-//        void emit() throws IOException {
-//            cos.writeU16(actionId);
-//            cos.writeU16(argOffset);
-//        }
-//    }
+    private int sizeInBytes(CsmData.CGroup cGroup) {
+        // cgroup 0:
+        //   offset of name
+        //   num_event/new_state pairs
+        //   event 0/new state 0
+        //   ...
+        return 2 + 2 + 2 * cGroup.eventMapping.size();
+    }
+    private int sizeInBytes(CsmData.CState cState) {
+        // cstate 0:
+        //   offset of name
+        //   num_event/new_state pairs | num_actions << 8
+        //   action 0
+        //   offset of arg 0
+        //   ...
+        //   action n
+        //   offset of arg n
+        //   event 0/new_state 0
+        //   ...
+        //   event j/new_state j
+        //   ff / cgroup 0    last cgroup specified
+        //   ...
+        //   ff / cgroup n    first cgroup specified
+        // ...
+        return 2 + 2 + 4 * cState.actions.size() + 2 * cState.groups.size() + 2 * cState.eventMapping.size();
+
+    }
 
     private void emitVersion(int major, int minor) throws IOException {
         cos.writeU8(major);
         cos.writeU8(minor);
     }
 
-//    private void emitVersion(int version) throws IOException {emitVersion(version, 0);}
-
-//    private int versionSize() {return 2;}
-
-//    private void emitStateIx(int ix) throws IOException {cos.writeU8(ix);}
-
-//    private int stateIxSize() {return 1;}
-
-    private void emitLabel() throws IOException {
+    private void emitLabel() {
         final DateFormat ISO8601 = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss.SSS'Z'",
             Locale.US); // Quoted "Z" to indicate UTC, no timezone offset
         final TimeZone UTC = TimeZone.getTimeZone("UTC");
@@ -132,25 +120,25 @@ public class CsmWriter{
         offset += 2;
         if (verbose) {
             System.out.printf("Start of %d CStates offsets will be written at offset %04x\n",
-                csmData.CStates.size(),
+                csmData.CStates().size(),
                 cos.size());
         }
-        cos.writeU8(csmData.CStates.size());
-        offset += 1 + 2*csmData.CStates.size();
+        cos.writeU8(csmData.CStates().size());
+        offset += 1 + 2*csmData.CStates().size();
         if (verbose) {
             System.out.printf("Start of %d CGroups offsets will be written at offset %04x\n",
-                csmData.CGroups.size(),
+                csmData.CGroups().size(),
                 cos.size());
         }
-        cos.writeU8(csmData.CGroups.size());
-        offset += 1 + 2*csmData.CGroups.size();
+        cos.writeU8(csmData.CGroups().size());
+        offset += 1 + 2*csmData.CGroups().size();
         if (verbose) {
             System.out.printf("The string pool offset will be written at offset %04x\n", offset);
         }
         // The string pool offset will be written after the offsets, but before the CStates, so account for it.
         offset += 2;
         predictedStateOffsets = new HashMap<>();
-        for (CsmData.CState state : csmData.CStates.values()) {
+        for (CsmData.CState state : csmData.CStates().values()) {
             predictedStateOffsets.put(state.name, offset);
             if (verbose) System.out.printf(
                 "Predicted offset for state %s: %04x written at offset %04x\n",
@@ -158,10 +146,10 @@ public class CsmWriter{
                 offset,
                 cos.size());
             cos.writeU16(offset);
-            offset += state.emitSize();
+            offset += sizeInBytes(state);
         }
         predictedGroupOffsets = new HashMap<>();
-        for (CsmData.CGroup group : csmData.CGroups.values()) {
+        for (CsmData.CGroup group : csmData.CGroups().values()) {
             predictedGroupOffsets.put(group.name, offset);
             if (verbose) System.out.printf(
                 "Predicted offset for group %s: %04x written at offset %04x\n",
@@ -169,7 +157,7 @@ public class CsmWriter{
                 offset,
                 cos.size());
             cos.writeU16(offset);
-            offset += group.emitSize();
+            offset += sizeInBytes(group);
         }
         // String pool offset.
         if (verbose) System.out.printf(
@@ -195,7 +183,7 @@ public class CsmWriter{
         //   ...
         //   ff / cgroup n    first cgroup specified
         // ...
-        for (CsmData.CState state : csmData.CStates.values()) {
+        for (CsmData.CState state : csmData.CStates().values()) {
             if (predictedStateOffsets.get(state.name) != cos.size()) {
                 System.out.printf(
                     "Internal error: CState '%s' predicted offset (%04x) != actual offset (%04x)\n",
@@ -207,7 +195,7 @@ public class CsmWriter{
                 System.out.printf("Actual offset for state %s: %04x\n", state.name, cos.size());
             // Offset of name, counts of transitions, count of actions
             cos.writeU16(cos.addString(state.name));
-            cos.writeU8(state.cGroups.size() + state.eventMapping.size());
+            cos.writeU8(state.groups.size() + state.eventMapping.size());
             cos.writeU8(state.actions.size());
             // Actions
             for (CsmData.CAction action : state.actions) {
@@ -220,7 +208,7 @@ public class CsmWriter{
                 cos.writeU8(event.stateIndex());
             }
             // CGroups, in reverse order
-            List<String> reversed = new ArrayList<>(state.cGroups);
+            List<String> reversed = new ArrayList<>(state.groups);
             Collections.reverse(reversed);
             for (String groupName : reversed) {
                 cos.writeU8(0xff);
@@ -235,7 +223,7 @@ public class CsmWriter{
         //   num_event/new_state pairs
         //   event id 0/new state id 0
         //   ...
-        for (CsmData.CGroup group : csmData.CGroups.values()) {
+        for (CsmData.CGroup group : csmData.CGroups().values()) {
             if (predictedGroupOffsets.get(group.name) != cos.size()) {
                 System.out.printf(
                     "Internal error: CGroup '%s' predicted offset (%04x) != actual offset (%04x)\n",
@@ -281,7 +269,7 @@ public class CsmWriter{
 
         public synchronized void writeU16(int v) throws IOException {
             // little end first.
-            dos.write((v >>> 0) & 0xFF);
+            dos.write((v) & 0xFF);
             dos.write((v >>> 8) & 0xFF);
         }
 

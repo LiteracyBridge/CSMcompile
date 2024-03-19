@@ -14,7 +14,7 @@ plugins {
     id("maven-publish")
 }
 
-version = "2.1.5" // Assign your project version here
+version = "2.1.8" // Assign your project version here
 group 'org.amplio.csm'
 project.ext.prop1 = "csmcompile"
 project.ext.snapshot = false
@@ -72,7 +72,6 @@ publishing {
         gpr(MavenPublication) {
             groupId = group // "org.amplio.csm"
             artifactId = project.ext.prop1
-//            version = "2.1"
             from(components.java)
         }
     }

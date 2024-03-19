@@ -184,13 +184,13 @@ public class Decompiler {
         }
 
         void addStateTo(CsmData csmData) {
-            CsmData.CState newState = csmData.addState(getName());
+            CsmData.CState newState = csmData.addCState(getName());
             for (ActionBits ab : actions) {
                 newState.actions.add(csmData.new CAction(ab.getActionName(), ab.getParamString()));
             }
             for (int groupIx : groups) {
                 GroupBits gb = groupBits.get(groupIx);
-                newState.cGroups.add(gb.getName());
+                newState.groups.add(gb.getName());
             }
             for (EventBits eb : events) {
                 newState.eventMapping.add(csmData.new CEvent(eb.getEventName(), eb.getNewStateName()));
