@@ -1,8 +1,8 @@
 {
   CGroups: {
-    whenSleeping:  { Home:       stWakeup },
-    whenAwake:     { Home:       stWakeup,
-                     Home__:     stGoSleep,
+    whenSleeping:  { House:      stWakeup },
+    whenAwake:     { House:      stWakeup,
+                     House__:    stGoSleep,
                      LongIdle:   stSleepy,
                      BattMin:    stOnBattMin,
                      starPlus:   stUSBmode,
@@ -12,10 +12,10 @@
                    },
     whenPlaying:   { Plus:       stPlayLouder,
                      Minus:      stPlaySofter,
-                     Pot:        stPlayPause,
+                     Bowl:       stPlayPause,
                      Lhand__:    stPlayJumpBack,
                      Rhand__:    stPlayJumpFwd },
-    whenPlayPaused:{ Pot:        stPlayResume },
+    whenPlayPaused:{ Bowl:       stPlayResume },
     whenNav:       { Lhand:      stOnPrevSubj,
                      Rhand:      stOnNextSubj,
                      AudioDone:  stWait,
@@ -30,20 +30,20 @@
                      Tree__:     stOnRepeatMsg,
                      Table:      stOnPrevMsg,
                    },
-    whenRecording:       { Pot:     stRecordingPaused,
+    whenRecording:       { Bowl:    stRecordingPaused,
                            Star:    stRecordingDone },
-    whenRecordingPaused: { Pot:     stRecordingResumed },
-    reviewNav:           { Home:    stEndRecordingHome,
+    whenRecordingPaused: { Bowl:    stRecordingResumed },
+    reviewNav:           { House:   stEndRecordingHouse,
                            Star:    stRecordAnother,
                            Tree:    stEndRecording,
                            Table:   stEndRecording,
                            Lhand:   stEndRecording,
                            Rhand:   stEndRecording,
                            Circle:  stEndRecording },
-    whenReviewing:       { Pot:     stReviewPaused,
+    whenReviewing:       { Bowl:    stReviewPaused,
                            Plus:    stReviewLouder,
                            Minus:   stReviewSofter },
-    whenReviewPaused:    { Pot:     stReviewResumed },
+    whenReviewPaused:    { Bowl:    stReviewResumed },
 
     whenIdle:      { starPlus:   stUSBmode,
                      Plus:       stIdleLouder,
@@ -85,7 +85,7 @@
     stEnterRepeat:  { Actions: [ callScript, enterState(stOnRepeatMsg) ],       CGroups:[ whenAwake, whenNav, whenNavSubjs ] },
 
     # Navigating within a playlist / subject
-    stMsgPause:     { Actions: [ saveState( 2),  setTimer(180000), pausePlay ], CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs, whenPlayPaused ], Pot: stMsgResume, Timer: stSleepy },
+    stMsgPause:     { Actions: [ saveState( 2),  setTimer(180000), pausePlay ], CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs, whenPlayPaused ], Bowl: stMsgResume, Timer: stSleepy },
     stMsgResume:    { Actions: [ resumePlay,  resumeSavedState(2) ],            CGroups:[ whenAwake, whenPlaying, whenNavMsgs ] },
 
     stOnPrevMsg:    { Actions: [ msgAdj(-1),  playSubject(msg) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioStart: stPlaying },
@@ -114,7 +114,7 @@
     stReviewResumed:    { Actions: [ resumePlay, resumeSavedState(3) ],         CGroups:[ whenAwake, reviewNav, whenReviewing ] },
 
     stEndRecording:     { Actions: [ saveRecording(sv), LED(_), resumeSavedState(2) ] },
-    stEndRecordingHome: { Actions: [ saveRecording(sv), setTimer(100) ],        Timer: stWakeup },
+    stEndRecordingHouse:{ Actions: [ saveRecording(sv), setTimer(100) ],        Timer: stWakeup },
 
 
     stIdleLouder:   { Actions: [ volAdj(+1), playSys(0),  resumePrevState ],    CGroups:[ whenAwake, whenPlaying ] },

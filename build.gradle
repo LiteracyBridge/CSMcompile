@@ -1,10 +1,25 @@
+
+buildscript {
+    repositories {
+        mavenCentral() // or gradlePluginPortal()
+    }
+    dependencies {
+        classpath("com.dipien:semantic-version-gradle-plugin:2.0.0")
+    }
+}
+
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id("maven-publish")
 }
 
-group 'org.amplio'
-version '1.1'
+version = "2.1.8" // Assign your project version here
+group 'org.amplio.csm'
+project.ext.prop1 = "csmcompile"
+project.ext.snapshot = false
+ext.snapshot = false
+apply plugin: "com.dipien.semantic-version"
 
 repositories {
     mavenCentral()
@@ -40,4 +55,24 @@ jar {
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/LiteracyBridge/CSMcompile")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            groupId = group // "org.amplio.csm"
+            artifactId = project.ext.prop1
+            from(components.java)
+        }
+    }
 }

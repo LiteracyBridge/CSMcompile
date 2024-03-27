@@ -75,3 +75,5 @@ gradlew.bat
 out/
 
 csmlister/
+
+*.csm
