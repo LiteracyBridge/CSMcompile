@@ -37,9 +37,9 @@ data/*
 ######################
 Thumbs.db
 .DS_Store
-gradle/
-gradlew
-gradlew.bat
+# gradle/
+# gradlew
+# gradlew.bat
 .gradle/
 
 # JetBrains
