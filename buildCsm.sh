@@ -18,8 +18,8 @@ function build() {
 #    echo " inc: ${inc}"
 #  fi
 
-  $verbose && echo java -jar build/libs/CSMcompile-1.1-all.jar ${list} $yaml
-  java -jar build/libs/CSMcompile-1.1-all.jar ${list} $yaml
+#  $verbose && echo java -jar build/libs/CSMcompile-2.1.8.jar ${list} $yaml
+  java -jar build/libs/CSMcompile-2.1.8-all.jar ${list} $yaml
   if [ "${include}" == "Y" ]; then
     $verbose && echo "xxd -i ${csm} > ${inc}"
     xxd -i ${csm} > ${inc}
