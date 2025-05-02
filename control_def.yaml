@@ -15,7 +15,7 @@
                      Bowl:       stPlayPause,
                      Lhand__:    stPlayJumpBack,
                      Rhand__:    stPlayJumpFwd },
-    whenPlayPaused:{ Bowl:       stPlayResume },
+    whenPlayPaused: { Bowl:       stPlayResume },
     whenNav:       { Lhand:      stOnPrevSubj,
                      Rhand:      stOnNextSubj,
                      AudioDone:  stWait,
@@ -53,7 +53,7 @@
                      starCircle: stNxtPkg },
   },
   CStates: {
-    stWakeup:       { Actions: [ LED(_), bgLED(bgPulse), changePkg, playSys(10) ], CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stWelcoming },
+    stWakeup:       { Actions: [ LED(_), bgLED(bgPulse), changePkg, playSys(10) ], CGroups: [ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stWelcoming },
     stWelcoming:    {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioDone: stPromptSubj },
     stPromptSubj:   { Actions: [ playSys(11) ],                                 CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioStart: stPromptingSub },
     stPromptingSub: {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavSubjs ], AudioDone: stWait },
@@ -92,7 +92,7 @@
     stOnNextMsg:    { Actions: [ msgAdj(+1),  playSubject(msg) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioStart: stPlaying },
     stPlaying:      {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioDone: stInterMsg },
     stInterMsg:     { Actions: [ playSys(9) ],                                  CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioDone: stWait },
-    
+
     stOnRepeatMsg:  { Actions: [ msgAdj(+1),  playSubject(msg) ],               CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioStart: stRepeating },
     stRepeating:    {                                                           CGroups:[ whenAwake, whenPlaying, whenNav, whenNavMsgs ], AudioDone: stOnRepeatMsg },
 
@@ -130,4 +130,3 @@
     stChgPkg:       { Actions: [ changePkg ],                                   CGroups:[ whenAwake, whenIdle, whenNavSubjs ] },
   }   # CStates
 }     # control.def
-
